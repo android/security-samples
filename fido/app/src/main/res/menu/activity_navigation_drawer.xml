@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_signin"
+        android:title="@string/sign_in" />
+    <item
+        android:id="@+id/nav_signout"
+        android:title="@string/sign_out" />
+
+    <item
+        android:id="@+id/nav_fido2Operations"
+        android:title="@string/u2f_operations">
+        <menu>
+            <item
+                android:id="@+id/nav_register"
+                android:icon="@android:drawable/ic_menu_add"
+                android:title="@string/register_token" />
+
+            <item
+                android:id="@+id/nav_auth"
+                android:icon="@drawable/ic_menu_login"
+                android:title="@string/auth_token" />
+        </menu>
+    </item>
+
+    <item android:title="@string/open_source">
+        <menu>
+            <item
+                android:id="@+id/nav_github"
+                android:icon="@drawable/github_octocat"
+                android:title="@string/github" />
+        </menu>
+    </item>
+</menu>

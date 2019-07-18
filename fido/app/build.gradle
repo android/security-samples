@@ -1,0 +1,73 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId 'com.fido.example.fido2apiexample'
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName '1.0'
+        multiDexEnabled true
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    signingConfigs {
+        // Use the provided 'fido-example.keystore' for signing so that the example
+        // server accepts the package signature
+        release {
+            storeFile file('fido-example.jks')
+            storePassword 'android-fido'
+            keyAlias 'fidoexamplekey'
+            keyPassword 'android-fido'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+configurations {
+    compile.exclude group: "org.apache.httpcomponents", module: "httpclient"
+}
+
+dependencies {
+    // JAR dependencies
+    implementation files('libs/webauthndemo-sdk.jar')
+
+    // Android Support
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:cardview-v7:28.0.0'
+    implementation 'com.android.support:customtabs:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'com.android.support:multidex:1.0.3'
+
+    // Play services
+    implementation 'com.google.android.gms:play-services-auth:16.0.1'
+    implementation 'com.google.android.gms:play-services-fido:17.0.0'
+//    implementation 'com.google.android.gms:play-services-ads:17.1.3'
+
+    // Other
+    implementation 'com.google.http-client:google-http-client:1.25.0'
+    implementation 'com.google.api-client:google-api-client:1.25.0'
+    implementation 'com.google.http-client:google-http-client-android:1.22.0'
+    implementation 'com.google.api-client:google-api-client-android:1.22.0'
+    implementation 'net.sf.ingenias:common-codec:1.3'
+}

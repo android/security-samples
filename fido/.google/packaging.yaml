@@ -1,0 +1,23 @@
+
+# GOOGLE SAMPLE PACKAGING DATA
+#
+# This file is used by Google as part of our samples packaging process.
+# End users may safely ignore this file. It has no relevance to other systems.
+---
+status:       PUBLISHED
+technologies: [Android]
+categories:   [Security]
+languages:    [Java]
+solutions:    [Mobile]
+github:       android/security
+level:        INTERMEDIATE
+apiRefs:
+    - com.google.android.gms.fido.Fido
+    - com.google.android.gms.fido.fido2.Fido2ApiClient
+    - com.google.android.gms.fido.fido2.Fido2PendingIntent
+    - com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse
+    - com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse
+    - com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
+    - com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions
+    - com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRequestOptions
+license: apache2
