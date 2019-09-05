@@ -1,5 +1,5 @@
 Android Key Attestation Sample
-===================================
+==============================
 
 This sample illustrates how to use the [Bouncy Castle ASN.1][1] parser to extract information
 from an Android attestation data structure to verify that a key pair has been
@@ -10,7 +10,7 @@ outside the Android framework. This is the recommended best practise, as it is s
 certificate's authenticity on a separate server that you trust.
 
 For more details, see the documentation and the guide at
-https://developer.android.com/training/articles/security-key-attestation.html .
+https://developer.android.com/training/articles/security-key-attestation.html.
 
 [1]: https://www.bouncycastle.org/
 
