@@ -19,7 +19,7 @@
 ---
 status:       PUBLISHED
 technologies: [Android]
-categories:   [security]
+categories:   [Security]
 languages:    [Kotlin]
 solutions:    [Mobile]
 github:       android/security
