@@ -28,7 +28,7 @@ import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProperties.BLOCK_MODE_CBC
 import android.security.keystore.KeyProperties.ENCRYPTION_PADDING_PKCS7
 import android.security.keystore.KeyProperties.KEY_ALGORITHM_AES
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Base64
 import android.util.Log
 import android.view.Menu
@@ -323,10 +323,10 @@ class MainActivity : AppCompatActivity(),
     }
 
     companion object {
-        private val ANDROID_KEY_STORE = "AndroidKeyStore"
-        private val DIALOG_FRAGMENT_TAG = "myFragment"
-        private val KEY_NAME_NOT_INVALIDATED = "key_not_invalidated"
-        private val SECRET_MESSAGE = "Very secret message"
-        private val TAG = MainActivity::class.java.simpleName
+        private const val ANDROID_KEY_STORE = "AndroidKeyStore"
+        private const val DIALOG_FRAGMENT_TAG = "myFragment"
+        private const val KEY_NAME_NOT_INVALIDATED = "key_not_invalidated"
+        private const val SECRET_MESSAGE = "Very secret message"
+        private const val TAG = "MainActivity"
     }
 }
