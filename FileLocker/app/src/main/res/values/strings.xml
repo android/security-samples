@@ -1,0 +1,50 @@
+<!--
+  ~ Copyright 2019 Google LLC
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     https://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<resources>
+    <string name="app_name">File Locker</string>
+
+    <string name="dialog_password_title">Enter password</string>
+    <string name="dialog_password_password_hint">Password</string>
+    <string name="dialog_password_positive_button">Done</string>
+    <string name="dialog_password_negative_button">Cancel</string>
+
+    <string name="dialog_new_password_current_password_hint">Current password</string>
+    <string name="dialog_new_password_new_password_hint">New password</string>
+    <string name="dialog_new_password_positive_button">Done</string>
+    <string name="dialog_new_password_negative_button">Cancel</string>
+    <string name="dialog_new_password_title">Set a new master password</string>
+    <string name="dialog_set_password_title">Set Password</string>
+    <string name="dialog_set_password_negative_button">Cancel</string>
+
+    <string name="message_password_set">Master password set</string>
+    <string name="message_password_cleared">Master password cleared</string>
+
+    <string name="error_incorrect_password">Incorrect password</string>
+    <string name="error_current_password_incorrect">Incorrect current password</string>
+    <string name="error_file_already_exists">File already exists</string>
+    <string name="error_generic_download_error">Unable to download and encrypt file</string>
+    <string name="error_unable_to_decrypt">Unable to decrypt file</string>
+    <string name="error_unable_to_save_file">Unable to encrypt and save file</string>
+
+    <string name="edit_title_hint">Title</string>
+    <string name="edit_body_hint">File body</string>
+    <string name="edit_title">Edit</string>
+    <string name="edit_menu_done_title">Done</string>
+    <string name="edit_menu_delete_title">Delete</string>
+
+
+</resources>
