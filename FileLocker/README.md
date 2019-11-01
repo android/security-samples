@@ -3,6 +3,10 @@
 A sample that demonstrates how to use the Jetpack Security library to encrypt and decrypt files by
 implementing a simple note taking app.
 
+<img src="screenshots/notes-list.png"
+     height="400"
+     alt="Screenshot showing a list of notes. The notes say 'Secret Note' and 'Encrypted Todo List'."/>
+
 ## Introduction
 
 This sample shows how to implement based file and shared preferences encryption using the
