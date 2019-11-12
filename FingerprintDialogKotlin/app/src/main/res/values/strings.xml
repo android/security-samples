@@ -44,7 +44,7 @@
     <string name="new_fingerprint_enrolled_description">
         A new fingerprint was added to this device, so your password is required.
     </string>
-    <string name="use_fingerprint_in_future">Use fingerprint in the future</string>
+    <string name="use_fingerprint_in_future">Use biometrics in the future</string>
     <string name="use_fingerprint_to_authenticate_title">Use fingerprint to authenticate</string>
     <string name="use_fingerprint_to_authenticate_key" >use_fingerprint_to_authenticate_key</string>
     <string name="description_bugdroid_icon">Android bugdroid image</string>
@@ -56,4 +56,9 @@
         Secure lock screen hasn\'t set been up.\n
         Go to \'Settings -> Security -> Fingerprint\' to set up a fingerprint
     </string>
+    <string name="prompt_info_title">My App\'s Authentication</string>
+    <string name="prompt_info_subtitle">Please login to get access</string>
+    <string name="prompt_info_description">My App is using Android biometric authentication</string>
+    <string name="prompt_info_use_app_password">Use app password</string>
+
 </resources>

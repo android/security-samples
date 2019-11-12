@@ -72,7 +72,6 @@
         android:layout_marginStart="@dimen/fingerprint_margin_horizontal"
         android:layout_marginEnd="@dimen/fingerprint_margin_horizontal"
         android:checked="true"
-        android:visibility="gone"
         android:text="@string/use_fingerprint_in_future" />
 
 </RelativeLayout>

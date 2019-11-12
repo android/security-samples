@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 
 package com.example.android.fingerprintdialog
 
-import android.app.KeyguardManager
 import android.content.Intent
 import android.content.SharedPreferences
-import android.hardware.fingerprint.FingerprintManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.security.keystore.KeyGenParameterSpec
@@ -28,7 +26,6 @@ import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProperties.BLOCK_MODE_CBC
 import android.security.keystore.KeyProperties.ENCRYPTION_PADDING_PKCS7
 import android.security.keystore.KeyProperties.KEY_ALGORITHM_AES
-import androidx.appcompat.app.AppCompatActivity
 import android.util.Base64
 import android.util.Log
 import android.view.Menu
@@ -37,6 +34,10 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import java.io.IOException
 import java.security.InvalidAlgorithmParameterException
 import java.security.InvalidKeyException
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity(),
     private lateinit var keyStore: KeyStore
     private lateinit var keyGenerator: KeyGenerator
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var biometricPrompt:BiometricPrompt
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +73,8 @@ class MainActivity : AppCompatActivity(),
 
         val (defaultCipher: Cipher, cipherNotInvalidated: Cipher) = setupCiphers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        biometricPrompt = instanceOfBiometricPrompt()
         setUpPurchaseButtons(cipherNotInvalidated, defaultCipher)
     }
 
@@ -85,34 +89,25 @@ class MainActivity : AppCompatActivity(),
         val purchaseButtonNotInvalidated =
                 findViewById<Button>(R.id.purchase_button_not_invalidated)
 
-        purchaseButtonNotInvalidated.run {
-            isEnabled = true
-            setOnClickListener(PurchaseButtonClickListener(
-                    cipherNotInvalidated, KEY_NAME_NOT_INVALIDATED))
-        }
+        // migration before and after: keeping the same pattern of disabling buttons if
+        // biometrics is not available
+        if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+            createKey(DEFAULT_KEY_NAME)
+            createKey(KEY_NAME_NOT_INVALIDATED, false)
 
-        val keyguardManager = getSystemService(KeyguardManager::class.java)
-        if (!keyguardManager.isKeyguardSecure) {
-            // Show a message that the user hasn't set up a fingerprint or lock screen.
+            purchaseButtonNotInvalidated.run {
+                isEnabled = true
+                setOnClickListener(PurchaseButtonClickListener(
+                        cipherNotInvalidated, KEY_NAME_NOT_INVALIDATED))
+            }
+            purchaseButton.run {
+                isEnabled = true
+                setOnClickListener(PurchaseButtonClickListener(defaultCipher, DEFAULT_KEY_NAME))
+            }
+        } else {
             showToast(getString(R.string.setup_lock_screen))
             purchaseButton.isEnabled = false
             purchaseButtonNotInvalidated.isEnabled = false
-            return
-        }
-
-        val fingerprintManager = getSystemService(FingerprintManager::class.java)
-        if (!fingerprintManager.hasEnrolledFingerprints()) {
-            purchaseButton.isEnabled = false
-            // This happens when no fingerprints are registered.
-            showToast(getString(R.string.register_fingerprint))
-            return
-        }
-
-        createKey(DEFAULT_KEY_NAME)
-        createKey(KEY_NAME_NOT_INVALIDATED, false)
-        purchaseButton.run {
-            isEnabled = true
-            setOnClickListener(PurchaseButtonClickListener(defaultCipher, DEFAULT_KEY_NAME))
         }
     }
 
@@ -188,16 +183,14 @@ class MainActivity : AppCompatActivity(),
     /**
      * Proceed with the purchase operation
      *
-     * @param withFingerprint `true` if the purchase was made by using a fingerprint
+     * @param withBiometrics `true` if the purchase was made by using a fingerprint
      * @param crypto the Crypto object
      */
-    override fun onPurchased(withFingerprint: Boolean, crypto: FingerprintManager.CryptoObject?) {
-        if (withFingerprint) {
+    override fun onPurchased(withBiometrics: Boolean, crypto: BiometricPrompt.CryptoObject?) {
+        if (withBiometrics) {
             // If the user authenticated with fingerprint, verify using cryptography and then show
             // the confirmation message.
-            if (crypto != null) {
-                tryEncrypt(crypto.cipher)
-            }
+            crypto?.cipher?.let { tryEncrypt(it) }
         } else {
             // Authentication happened with backup password. Just show the confirmation message.
             showConfirmation()
@@ -287,6 +280,53 @@ class MainActivity : AppCompatActivity(),
         return super.onOptionsItemSelected(item)
     }
 
+    private fun instanceOfBiometricPrompt(): BiometricPrompt {
+        val executor = ContextCompat.getMainExecutor(this)
+
+        val callback = object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                super.onAuthenticationError(errorCode, errString)
+                Log.d(TAG, "$errorCode :: $errString")
+                if(errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                    loginWithPassword() // because negative button says use application password
+                }
+            }
+
+            override fun onAuthenticationFailed() {
+                super.onAuthenticationFailed()
+                Log.d(TAG, "Authentication failed for an unknown reason")
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                super.onAuthenticationSucceeded(result)
+                Log.d(TAG, "Authentication was successful")
+                onPurchased(true,result.cryptoObject)
+            }
+        }
+
+        val biometricPrompt = BiometricPrompt(this, executor, callback)
+        return biometricPrompt
+    }
+
+    private fun getPromptInfo(): BiometricPrompt.PromptInfo {
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle(getString(R.string.prompt_info_title))
+                .setSubtitle(getString(R.string.prompt_info_subtitle))
+                .setDescription(getString(R.string.prompt_info_description))
+                .setConfirmationRequired(false)
+                .setNegativeButtonText(getString(R.string.prompt_info_use_app_password))
+                // .setDeviceCredentialAllowed(true) // true for device credential option
+                .build()
+        return promptInfo
+    }
+
+    private fun loginWithPassword( ) {
+        Log.d(TAG, "Use app password")
+        val fragment = FingerprintAuthenticationDialogFragment()
+        fragment.setCallback(this@MainActivity)
+        fragment.show(fragmentManager, DIALOG_FRAGMENT_TAG)
+    }
+
     private inner class PurchaseButtonClickListener internal constructor(
             internal var cipher: Cipher,
             internal var keyName: String
@@ -296,29 +336,13 @@ class MainActivity : AppCompatActivity(),
             findViewById<View>(R.id.confirmation_message).visibility = View.GONE
             findViewById<View>(R.id.encrypted_message).visibility = View.GONE
 
-            val fragment = FingerprintAuthenticationDialogFragment()
-            fragment.setCryptoObject(FingerprintManager.CryptoObject(cipher))
-            fragment.setCallback(this@MainActivity)
+            val promptInfo = getPromptInfo()
 
-            // Set up the crypto object for later, which will be authenticated by fingerprint usage.
             if (initCipher(cipher, keyName)) {
-
-                // Show the fingerprint dialog. The user has the option to use the fingerprint with
-                // crypto, or can fall back to using a server-side verified password.
-                val useFingerprintPreference = sharedPreferences
-                        .getBoolean(getString(R.string.use_fingerprint_to_authenticate_key), true)
-                if (useFingerprintPreference) {
-                    fragment.setStage(Stage.FINGERPRINT)
-                } else {
-                    fragment.setStage(Stage.PASSWORD)
-                }
-            } else {
-                // This happens if the lock screen has been disabled or or a fingerprint was
-                // enrolled. Thus, show the dialog to authenticate with their password first and ask
-                // the user if they want to authenticate with a fingerprint in the future.
-                fragment.setStage(Stage.NEW_FINGERPRINT_ENROLLED)
+                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            }else{
+                loginWithPassword()
             }
-            fragment.show(fragmentManager, DIALOG_FRAGMENT_TAG)
         }
     }
 
