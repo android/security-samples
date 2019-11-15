@@ -58,12 +58,12 @@ import javax.crypto.SecretKey
  * Main entry point for the sample, showing a backpack and "Purchase" button.
  */
 class MainActivity : AppCompatActivity(),
-    FingerprintAuthenticationDialogFragment.Callback {
+        FingerprintAuthenticationDialogFragment.Callback {
 
     private lateinit var keyStore: KeyStore
     private lateinit var keyGenerator: KeyGenerator
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var biometricPrompt:BiometricPrompt
+    private lateinit var biometricPrompt: BiometricPrompt
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity(),
         val (defaultCipher: Cipher, cipherNotInvalidated: Cipher) = setupCiphers()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        biometricPrompt = instanceOfBiometricPrompt()
+        biometricPrompt = createBiometricPrompt()
         setUpPurchaseButtons(cipherNotInvalidated, defaultCipher)
     }
 
@@ -89,9 +89,8 @@ class MainActivity : AppCompatActivity(),
         val purchaseButtonNotInvalidated =
                 findViewById<Button>(R.id.purchase_button_not_invalidated)
 
-        // migration before and after: keeping the same pattern of disabling buttons if
-        // biometrics is not available
-        if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+        if (BiometricManager.from(
+                        application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
             createKey(DEFAULT_KEY_NAME)
             createKey(KEY_NAME_NOT_INVALIDATED, false)
 
@@ -280,15 +279,15 @@ class MainActivity : AppCompatActivity(),
         return super.onOptionsItemSelected(item)
     }
 
-    private fun instanceOfBiometricPrompt(): BiometricPrompt {
+    private fun createBiometricPrompt(): BiometricPrompt {
         val executor = ContextCompat.getMainExecutor(this)
 
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
                 Log.d(TAG, "$errorCode :: $errString")
-                if(errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
-                    loginWithPassword() // because negative button says use application password
+                if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                    loginWithPassword() // Because negative button says use application password
                 }
             }
 
@@ -300,7 +299,7 @@ class MainActivity : AppCompatActivity(),
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
                 Log.d(TAG, "Authentication was successful")
-                onPurchased(true,result.cryptoObject)
+                onPurchased(true, result.cryptoObject)
             }
         }
 
@@ -308,19 +307,21 @@ class MainActivity : AppCompatActivity(),
         return biometricPrompt
     }
 
-    private fun getPromptInfo(): BiometricPrompt.PromptInfo {
+    private fun createPromptInfo(): BiometricPrompt.PromptInfo {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
                 .setTitle(getString(R.string.prompt_info_title))
                 .setSubtitle(getString(R.string.prompt_info_subtitle))
                 .setDescription(getString(R.string.prompt_info_description))
                 .setConfirmationRequired(false)
                 .setNegativeButtonText(getString(R.string.prompt_info_use_app_password))
-                // .setDeviceCredentialAllowed(true) // true for device credential option
+                // .setDeviceCredentialAllowed(true) // Allow PIN/pattern/password authentication.
+                // Also note that setDeviceCredentialAllowed and setNegativeButtonText are
+                // incompatible so that if you uncomment one you must comment out the other
                 .build()
         return promptInfo
     }
 
-    private fun loginWithPassword( ) {
+    private fun loginWithPassword() {
         Log.d(TAG, "Use app password")
         val fragment = FingerprintAuthenticationDialogFragment()
         fragment.setCallback(this@MainActivity)
@@ -336,11 +337,11 @@ class MainActivity : AppCompatActivity(),
             findViewById<View>(R.id.confirmation_message).visibility = View.GONE
             findViewById<View>(R.id.encrypted_message).visibility = View.GONE
 
-            val promptInfo = getPromptInfo()
+            val promptInfo = createPromptInfo()
 
             if (initCipher(cipher, keyName)) {
                 biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
-            }else{
+            } else {
                 loginWithPassword()
             }
         }

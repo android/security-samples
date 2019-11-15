@@ -20,7 +20,7 @@ android {
 }
 
 dependencies {
-    def biometric_version= '1.0.0'
+    def biometric_version = '1.0.0'
     implementation "androidx.biometric:biometric:$biometric_version"
     implementation "androidx.appcompat:appcompat:$app_compat_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
