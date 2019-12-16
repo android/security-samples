@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.example.android.biomauth
+package com.example.android.biometricauth
 
 import android.app.DialogFragment
 import android.content.Context

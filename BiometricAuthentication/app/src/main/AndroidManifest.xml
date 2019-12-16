@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License
   -->
-<manifest package="com.example.android.biomauth"
+<manifest package="com.example.android.biometricauth"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="1"
@@ -31,7 +31,7 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity
-            android:name="com.example.android.biomauth.MainActivity"
+            android:name="com.example.android.biometricauth.MainActivity"
             android:label="@string/application_name"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -41,8 +41,8 @@
         </activity>
 
         <activity
-            android:name="com.example.android.biomauth.SettingsActivity"
+            android:name="com.example.android.biometricauth.SettingsActivity"
             android:label="@string/action_settings"
-            android:parentActivityName="com.example.android.biomauth.MainActivity"/>
+            android:parentActivityName="com.example.android.biometricauth.MainActivity"/>
     </application>
 </manifest>
