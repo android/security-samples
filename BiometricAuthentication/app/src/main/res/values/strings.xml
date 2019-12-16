@@ -19,7 +19,7 @@
       on the template directory makes it hard for the sample buildable with Android.mk.
       Thus defining the application_name with different name from the template.
     -->
-    <string name="application_name">FingerprintDialog</string>
+    <string name="application_name">Biometric Authentication</string>
     <string name="action_settings">Settings</string>
     <string name="cancel">Cancel</string>
     <string name="sign_in">Sign in</string>
