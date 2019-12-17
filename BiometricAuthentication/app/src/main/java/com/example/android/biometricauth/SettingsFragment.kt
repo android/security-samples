@@ -14,18 +14,16 @@
  * limitations under the License
  */
 
-package com.example.android.fingerprintdialog
+package com.example.android.biometricauth
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.preference.PreferenceFragment
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsFragment : PreferenceFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        fragmentManager.beginTransaction()
-                .replace(android.R.id.content, SettingsFragment())
-                .commit()
+        addPreferencesFromResource(R.xml.preferences)
     }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.example.android.fingerprintdialog
+package com.example.android.biometricauth
 
 import android.app.DialogFragment
 import android.content.Context

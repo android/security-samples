@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
-package com.example.android.fingerprintdialog
+package com.example.android.biometricauth
 
-const val DEFAULT_KEY_NAME = "default_key"
+import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+
+fun AppCompatActivity.showToast(text: String) {
+    Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+}
