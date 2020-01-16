@@ -22,7 +22,15 @@ interface EncryptionManager {
 }
 
 /**
- * Biometrics and Cryptography are orthogonal.
+ * Biometrics and Cryptography are not the same thing. In fact, they are orthogonal concepts,
+ * completely independent of each other. Cryptography is the art of hiding messages in plain
+ * sight. In cryptography, even if you intercept my message you cannot read it because you don't
+ * have the secret key. Biometrics, on the other hand, is for verifying personal identity through
+ * bodily measurements. In biometrics, only my fingerprint or face or iris can unlock my door.
+ *
+ * Nonetheless. While biometrics doesn't need cryptography, cryptography can be augmented with
+ * biometrics. To understand this, let's dive a bit into how cryptography works on Android. And
+ * then we will show how biometrics can be used for an added layer of security.
  *
  * At the core of cryptography is a [Cipher], an algorithm that can be used to perform
  * encryption and decryption on data. To apply a cipher in a meaningful way, you need a special
