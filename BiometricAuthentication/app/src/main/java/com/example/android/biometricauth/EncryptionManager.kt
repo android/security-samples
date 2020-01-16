@@ -26,10 +26,12 @@ interface EncryptionManager {
  * completely independent of each other. Cryptography is the art of hiding messages in plain
  * sight. In cryptography, even if you intercept my message you cannot read it because you don't
  * have the secret key. Biometrics, on the other hand, is for verifying personal identity through
- * bodily measurements. In biometrics, only my fingerprint or face or iris can unlock my door.
+ * bodily measurements. In biometrics, only my fingerprint or face or iris or voice can unlock my
+ * door.
  *
  * Nonetheless. While biometrics doesn't need cryptography, cryptography can be augmented with
- * biometrics. To understand this, let's dive a bit into how cryptography works on Android. And
+ * the use of biometrics. And that's where [CryptoObject] comes in. To understand this, let's
+ * dive a bit into how cryptography works on Android. And
  * then we will show how biometrics can be used for an added layer of security.
  *
  * At the core of cryptography is a [Cipher], an algorithm that can be used to perform
