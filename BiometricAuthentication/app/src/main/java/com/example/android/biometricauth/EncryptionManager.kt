@@ -1,5 +1,16 @@
 package com.example.android.biometricauth
 
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Log
+import java.nio.charset.Charset
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.util.Arrays
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+
 /**
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
@@ -15,61 +26,101 @@ package com.example.android.biometricauth
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-interface EncryptionManager {
-    fun getOrCreateKey(name:String, requireAuthentication:Boolean)
 
+interface EncryptionManager {
+    /**
+     * This method first gets/generates a Secretkey and then initializes the Cipher with the key.
+     * [ENCRYPT_MODE][Cipher.ENCRYPT_MODE] is used.
+     */
+    fun getInitializedCipherForEncryption(keyName: String):Cipher
+
+    /**
+     * This method first gets/generates a Secretkey and then initializes the Cipher with the key.
+     * [DECRYPT_MODE][Cipher.DECRYPT_MODE] is used.
+     */
+    fun getInitializedCipherForDecryption(keyName:String):Cipher
+
+    /**
+     * The Cipher created with [getInitializedCipherForEncryption] is used here
+     */
+    fun encryptData(plaintext:String,cipher:Cipher):String
+
+    /**
+     * The Cipher created with [getInitializedCipherForDecryption] is used here
+     */
+    fun decryptData(ciphertext:String,cipher:Cipher):String
+
+    /* instance creator */
+    companion object{
+        fun create():EncryptionManager{
+            return EncryptionManagerImpl()
+        }
+    }
 
 }
 
-/**
- * Biometrics and Cryptography are not the same thing. In fact, they are orthogonal concepts,
- * completely independent of each other. Cryptography is the art of hiding messages in plain
- * sight. In cryptography, even if you intercept my message you cannot read it because you don't
- * have the secret key. Biometrics, on the other hand, is for verifying personal identity through
- * bodily measurements. In biometrics, only my fingerprint or face or iris or voice can unlock my
- * door.
- *
- * Nonetheless. While biometrics doesn't need cryptography, cryptography can be augmented with
- * the use of biometrics. And that's where [CryptoObject] comes in. To understand this, let's
- * dive a bit into how cryptography works on Android. And
- * then we will show how biometrics can be used for an added layer of security.
- *
- * At the core of cryptography is a [Cipher], an algorithm that can be used to perform
- * encryption and decryption on data. To apply a cipher in a meaningful way, you need a special
- * variable called a [SecreKey]. Only someone with the secret key can use the cipher to decrypt
- * your data. On Android, secret keys are usually kept in a secure system called the Android
- * Keystore. Different OEMs implement the Keystore differently. But the basic idea is to keep the
- * keys in a place where third-party apps cannot reach -- a secure memory location sometimes
- * referred to as the Trusted Execution Environment (TEE) or the Secure Element (SE) that is only
- * accessible to the framework.
- *
- * When you ask the Keystore to create a key for you, it never actually gives you the key. That's
-because the [SecretKey] material is never allowed to leave the secure area. The actual process
-goes like this:
- * 1. Your app asks the Keystore for a key
- * 2. The Keystore creates the key in the secure memory location
- * 3. The Keystore returns an ID to your app
- * 4. When your app wants to perform encryption, it aks the Keystore to do it.
- * 5. The keystore takes in the plaintext and the key ID, and returns the ciphertext (i.e.
- * encrypted data)
- * 6. When your app wants to perform decryption, the Keystore takes in the ciphertext and the key
- * ID and returns the plaintext (i.e. decrypted data)
- *
- *
- *
- *
- * to be meaningful, a cipher needs a
- * [SecretKey] that it uses to
- * obfuscate the data.
- *
- * At the technical level, a [Cipher] requires a [SecretKey] to perform encryption.
- * In fact, the Biometrics Library doesn't do anything
- * for cryptography.
- * This biometric library doesn't really have much to do with cryptography. The two con
- * Cipher does the encryption/decryption
- * Cipher needs a SecretKey
- * SecretKey lives in KeyStore and so we must load the KeyStore
- */
 private class EncryptionManagerImpl: EncryptionManager{
+
+    val TAG = "EncryptionManager"
+    val ANDROID_KEYSTORE = "AndroidKeyStore"
+
+    override fun getInitializedCipherForEncryption(keyName: String): Cipher {
+        val cipher = getCipher()
+        val secretKey = getOrCreateSecretKey(keyName,true)
+        cipher.init(Cipher.ENCRYPT_MODE,secretKey)
+        return cipher
+    }
+
+    override fun getInitializedCipherForDecryption(keyName: String): Cipher {
+        val cipher = getCipher()
+        val secretKey = getOrCreateSecretKey(keyName,true)
+        cipher.init(Cipher.DECRYPT_MODE,secretKey)
+        return cipher
+    }
+
+    override fun encryptData(plaintext: String, cipher: Cipher): String {
+        val ciphertext = cipher.doFinal(plaintext.toByteArray(Charset.defaultCharset()))
+        return Arrays.toString(ciphertext)
+    }
+
+    override fun decryptData(ciphertext: String, cipher: Cipher): String {
+        val plaintext = cipher.doFinal(ciphertext.toByteArray(Charset.defaultCharset()))
+        return Arrays.toString(plaintext)
+    }
+
+    private fun getCipher():Cipher{
+        val transformation = "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_CBC}/" +
+                "${KeyProperties.ENCRYPTION_PADDING_PKCS7}"
+        return Cipher.getInstance(transformation)
+    }
+
+    private fun getOrCreateSecretKey(keyName: String, requireAuthentication: Boolean):SecretKey {
+        // If Secretkey was previously created for that keyName, then grab and return it.
+        try{
+            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+            keyStore.load(null) // Keystore must be loaded before it can be accessed
+            return keyStore.getKey(keyName,null) as SecretKey
+        }catch(e: KeyStoreException){
+            // keyName didn't match a SecretKey. Do nothing. Except maybe log it.
+            Log.d(TAG,"$keyName didn't match a SecretKey")
+        }
+
+        // if you reach here, then a new SecretKey must be generated for that keyName
+        val paramsBuilder = KeyGenParameterSpec.Builder(keyName,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+        paramsBuilder.apply {
+            setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+            setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+            setUserAuthenticationRequired(true)
+        }
+
+        val keyGenParams=paramsBuilder.build()
+        val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,
+                ANDROID_KEYSTORE)
+        keyGenerator.init(keyGenParams)
+        return keyGenerator.generateKey()
+    }
+
+
 
 }
