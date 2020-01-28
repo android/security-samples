@@ -53,5 +53,6 @@
     <string name="prompt_info_subtitle">Please login to get access</string>
     <string name="prompt_info_description">My App is using Android biometric authentication</string>
     <string name="prompt_info_use_app_password">Use app password</string>
+    <string name="secret_key_name">biometric_sample_encryption_key</string>
 
 </resources>

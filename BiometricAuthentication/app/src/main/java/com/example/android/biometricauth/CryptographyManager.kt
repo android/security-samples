@@ -2,14 +2,14 @@ package com.example.android.biometricauth
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Log
 import java.nio.charset.Charset
+import java.security.AlgorithmParameters
 import java.security.KeyStore
-import java.security.KeyStoreException
 import java.util.Arrays
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.spec.IvParameterSpec
 
 /**
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
@@ -27,7 +27,7 @@ import javax.crypto.SecretKey
  * limitations under the License.
  */
 
-interface EncryptionManager {
+interface CryptographyManager {
     /**
      * This method first gets/generates a Secretkey and then initializes the Cipher with the key.
      * [ENCRYPT_MODE][Cipher.ENCRYPT_MODE] is used.
@@ -52,29 +52,31 @@ interface EncryptionManager {
 
     /* instance creator */
     companion object{
-        fun create():EncryptionManager{
-            return EncryptionManagerImpl()
+        fun create():CryptographyManager{
+            return CryptographyManagerImpl()
         }
     }
 
 }
 
-private class EncryptionManagerImpl: EncryptionManager{
+private class CryptographyManagerImpl: CryptographyManager{
 
-    val TAG = "EncryptionManager"
+    private var parameterSpec: AlgorithmParameters? = null
+    val TAG = "CryptographyManager"
     val ANDROID_KEYSTORE = "AndroidKeyStore"
 
     override fun getInitializedCipherForEncryption(keyName: String): Cipher {
         val cipher = getCipher()
         val secretKey = getOrCreateSecretKey(keyName,true)
         cipher.init(Cipher.ENCRYPT_MODE,secretKey)
+        parameterSpec = cipher.parameters
         return cipher
     }
 
     override fun getInitializedCipherForDecryption(keyName: String): Cipher {
         val cipher = getCipher()
         val secretKey = getOrCreateSecretKey(keyName,true)
-        cipher.init(Cipher.DECRYPT_MODE,secretKey)
+        cipher.init(Cipher.DECRYPT_MODE,secretKey,parameterSpec)
         return cipher
     }
 
@@ -89,21 +91,15 @@ private class EncryptionManagerImpl: EncryptionManager{
     }
 
     private fun getCipher():Cipher{
-        val transformation = "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_CBC}/" +
-                "${KeyProperties.ENCRYPTION_PADDING_PKCS7}"
+        val transformation = KeyProperties.KEY_ALGORITHM_AES+"/"+KeyProperties.BLOCK_MODE_CBC+"/"+KeyProperties.ENCRYPTION_PADDING_PKCS7
         return Cipher.getInstance(transformation)
     }
 
     private fun getOrCreateSecretKey(keyName: String, requireAuthentication: Boolean):SecretKey {
         // If Secretkey was previously created for that keyName, then grab and return it.
-        try{
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.load(null) // Keystore must be loaded before it can be accessed
-            return keyStore.getKey(keyName,null) as SecretKey
-        }catch(e: KeyStoreException){
-            // keyName didn't match a SecretKey. Do nothing. Except maybe log it.
-            Log.d(TAG,"$keyName didn't match a SecretKey")
-        }
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+        keyStore.load(null) // Keystore must be loaded before it can be accessed
+        keyStore.getKey(keyName,null)?.let{return it as SecretKey}
 
         // if you reach here, then a new SecretKey must be generated for that keyName
         val paramsBuilder = KeyGenParameterSpec.Builder(keyName,
