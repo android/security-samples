@@ -2,6 +2,7 @@ package com.example.android.biometricauth
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import java.nio.charset.Charset
 import java.security.AlgorithmParameters
 import java.security.KeyStore
@@ -91,7 +92,8 @@ private class CryptographyManagerImpl: CryptographyManager{
     }
 
     private fun getCipher():Cipher{
-        val transformation = KeyProperties.KEY_ALGORITHM_AES+"/"+KeyProperties.BLOCK_MODE_CBC+"/"+KeyProperties.ENCRYPTION_PADDING_PKCS7
+        val transformation = KeyProperties.KEY_ALGORITHM_AES+"/"+
+                KeyProperties.BLOCK_MODE_CBC+"/"+KeyProperties.ENCRYPTION_PADDING_PKCS7
         return Cipher.getInstance(transformation)
     }
 
@@ -114,6 +116,7 @@ private class CryptographyManagerImpl: CryptographyManager{
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,
                 ANDROID_KEYSTORE)
         keyGenerator.init(keyGenParams)
+        Log.d(TAG,"generated new secret key")
         return keyGenerator.generateKey()
     }
 
