@@ -1,6 +1,5 @@
-package com.example.biometricloginsample
 
-/**
+/*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +14,8 @@ package com.example.biometricloginsample
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.example.biometricloginsample
+
 data class LoginWithPasswordFormState (
     val usernameError: Int? = null,
     val passwordError: Int? = null,

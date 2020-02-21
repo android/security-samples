@@ -1,12 +1,5 @@
-package com.example.biometricloginsample
 
-import android.app.Application
-import android.util.Patterns
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-
-/**
+/*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +14,14 @@ import androidx.lifecycle.MutableLiveData
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.example.biometricloginsample
+
+import android.app.Application
+import android.util.Patterns
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+
 class LoginWithPasswordViewModel(application: Application) : AndroidViewModel(application){
 
     private val _loginForm = MutableLiveData<LoginWithPasswordFormState>()
@@ -52,13 +53,15 @@ class LoginWithPasswordViewModel(application: Application) : AndroidViewModel(ap
 
     fun login(username: String, password: String):Boolean {
         if(isUserNameValid(username) && isPasswordValid(password)){
-            // send to your sever to login
-            // your server would then asynchronously return a fakeToken, etc, which you would use
-            // to get/set other data
-            // you would normally store that fakeToken, etc, in a local database. But here we just
-            // use an object class: SampleAppUser
+            // Normally this method would asynchronously send this to your server and your sever
+            // would return a token. For high sensitivity apps such as banking, you would keep that
+            // token in transient memory similar to my SampleAppUser object. This way the user
+            // must login each time they start the app.
+            // In this sample, we don't call a server. Instead we use a fake token that we set
+            // right here:
+
             SampleAppUser.username=username
-            SampleAppUser.fakeToken = "some random fakeToken"
+            SampleAppUser.fakeToken = java.util.UUID.randomUUID().toString()
             return true
         }
         return false

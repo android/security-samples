@@ -1,6 +1,6 @@
 package com.example.biometricloginsample
 
-/**
+/*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,6 @@ package com.example.biometricloginsample
  * limitations under the License.
  */
 
-/**
- * Normally you store this information in a data class or a local database such as Room.
- */
 object SampleAppUser {
     var fakeToken: String?=null
     var username: String?=null
