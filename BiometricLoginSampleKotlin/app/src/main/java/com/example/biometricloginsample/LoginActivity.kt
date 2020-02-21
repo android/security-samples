@@ -81,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         val useBiometricsView = findViewById<AppCompatTextView>(R.id.use_biometrics)
         useBiometricsView.setOnClickListener {
             if (ciphertextWrapper != null) {
+                encryptedServerTokenWrapper = ciphertextWrapper
                 showBiometricPromptForDecryption()
             } else {
                 startActivity(Intent(this, EnableBiometricLoginActivity::class.java))
