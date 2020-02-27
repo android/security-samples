@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
@@ -16,24 +15,23 @@
  */
 package com.example.biometricloginsample
 
-import android.app.Application
 import android.util.Patterns
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 
-class LoginWithPasswordViewModel(application: Application) : AndroidViewModel(application){
+class LoginWithPasswordViewModel : ViewModel() {
 
-    private val _loginForm = MutableLiveData<LoginWithPasswordFormState>()
-    val loginWithPasswordFormState: LiveData<LoginWithPasswordFormState> = _loginForm
+    private val _loginForm = MutableLiveData<LoginFormState>()
+    val loginWithPasswordFormState: LiveData<LoginFormState> = _loginForm
 
-    fun onLoginDataChanged(username:String, password:String){
+    fun onLoginDataChanged(username: String, password: String) {
         if (!isUserNameValid(username)) {
-            _loginForm.value = LoginWithPasswordFormState(usernameError = R.string.invalid_username)
+            _loginForm.value = FailedLoginFormState(usernameError = R.string.invalid_username)
         } else if (!isPasswordValid(password)) {
-            _loginForm.value = LoginWithPasswordFormState(passwordError = R.string.invalid_password)
+            _loginForm.value = FailedLoginFormState(passwordError = R.string.invalid_password)
         } else {
-            _loginForm.value = LoginWithPasswordFormState(isDataValid = true)
+            _loginForm.value = SuccessfulLoginFormState(isDataValid = true)
         }
     }
 
@@ -51,8 +49,8 @@ class LoginWithPasswordViewModel(application: Application) : AndroidViewModel(ap
         return password.length > 5
     }
 
-    fun login(username: String, password: String):Boolean {
-        if(isUserNameValid(username) && isPasswordValid(password)){
+    fun login(username: String, password: String): Boolean {
+        if (isUserNameValid(username) && isPasswordValid(password)) {
             // Normally this method would asynchronously send this to your server and your sever
             // would return a token. For high sensitivity apps such as banking, you would keep that
             // token in transient memory similar to my SampleAppUser object. This way the user
@@ -60,7 +58,7 @@ class LoginWithPasswordViewModel(application: Application) : AndroidViewModel(ap
             // In this sample, we don't call a server. Instead we use a fake token that we set
             // right here:
 
-            SampleAppUser.username=username
+            SampleAppUser.username = username
             SampleAppUser.fakeToken = java.util.UUID.randomUUID().toString()
             return true
         }

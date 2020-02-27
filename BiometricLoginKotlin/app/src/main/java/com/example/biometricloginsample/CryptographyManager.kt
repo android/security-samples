@@ -76,7 +76,7 @@ data class CiphertextWrapper(val ciphertext: ByteArray, val initializationVector
 private class CryptographyManagerImpl : CryptographyManager {
 
     private val KEY_SIZE: Int = 256
-    val ANDROID_KEYSTORE = "AndroidKeyStore"
+    private val ANDROID_KEYSTORE = "AndroidKeyStore"
     private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
     private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
     private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES

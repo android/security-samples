@@ -20,12 +20,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.example.biometricloginsample.databinding.ActivityEnableBiometricLoginBinding
 
 class EnableBiometricLoginActivity : AppCompatActivity() {
 
@@ -35,32 +34,34 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_enable_biometric_login)
-        val usernameView = findViewById<AppCompatEditText>(R.id.username)
-        val passwordView = findViewById<AppCompatEditText>(R.id.password)
-        val authorizeButton = findViewById<AppCompatButton>(R.id.authorize)
-        findViewById<AppCompatButton>(R.id.cancel).setOnClickListener { finish() }
+        val binding = ActivityEnableBiometricLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.cancel.setOnClickListener { finish() }
         loginViewModel = ViewModelProviders.of(this).get(LoginWithPasswordViewModel::class.java)
 
         loginViewModel.loginWithPasswordFormState.observe(this, Observer {
             val loginState = it ?: return@Observer
-            authorizeButton.isEnabled = loginState.isDataValid
-            loginState.usernameError?.let { usernameView.error = getString(it) }
-            loginState.passwordError?.let { passwordView.error = getString(it) }
+            when (loginState) {
+                is SuccessfulLoginFormState -> binding.authorize.isEnabled = loginState.isDataValid
+                is FailedLoginFormState -> {
+                    loginState.usernameError?.let { binding.username.error = getString(it) }
+                    loginState.passwordError?.let { binding.password.error = getString(it) }
+                }
+            }
         })
 
-        usernameView.afterTextChanged {
+        binding.username.afterTextChanged {
             loginViewModel.onLoginDataChanged(
-                usernameView.text.toString(),
-                passwordView.text.toString()
+                binding.username.text.toString(),
+                binding.password.text.toString()
             )
         }
 
-        passwordView.apply {
+        binding.password.apply {
             afterTextChanged {
                 loginViewModel.onLoginDataChanged(
-                    usernameView.text.toString(),
-                    passwordView.text.toString()
+                    binding.username.text.toString(),
+                    binding.password.text.toString()
                 )
             }
 
@@ -68,15 +69,15 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
                 when (actionId) {
                     EditorInfo.IME_ACTION_DONE ->
                         loginWithPassword(
-                            usernameView.text.toString(),
-                            passwordView.text.toString()
+                            binding.username.text.toString(),
+                            binding.password.text.toString()
                         )
                 }
                 false
             }
         }
-        authorizeButton.setOnClickListener {
-            loginWithPassword(usernameView.text.toString(), passwordView.text.toString())
+        binding.authorize.setOnClickListener {
+            loginWithPassword(binding.username.text.toString(), binding.password.text.toString())
         }
     }
 
@@ -105,17 +106,18 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun encryptAndStoreServerToken(authResult: BiometricPrompt.AuthenticationResult){
-        authResult?.cryptoObject?.cipher?.apply{
+    private fun encryptAndStoreServerToken(authResult: BiometricPrompt.AuthenticationResult) {
+        authResult?.cryptoObject?.cipher?.apply {
             SampleAppUser.fakeToken?.let { token ->
-                Log.d(TAG,"The token from server is $token")
-                val encryptedServerTokenWrapper = cryptographyManager.encryptData(token,this)
-                cryptographyManager.persistCiphertextWrapperToSharedPrefs(encryptedServerTokenWrapper,
+                Log.d(TAG, "The token from server is $token")
+                val encryptedServerTokenWrapper = cryptographyManager.encryptData(token, this)
+                cryptographyManager.persistCiphertextWrapperToSharedPrefs(
+                    encryptedServerTokenWrapper,
                     applicationContext,
                     SHARED_PREFS_FILENAME,
                     Context.MODE_PRIVATE,
                     CIPHERTEXT_WRAPPER
-                    )
+                )
             }
         }
         finish()
