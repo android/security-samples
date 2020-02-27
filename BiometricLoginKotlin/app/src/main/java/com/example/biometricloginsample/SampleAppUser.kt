@@ -17,6 +17,6 @@ package com.example.biometricloginsample
  */
 
 object SampleAppUser {
-    var fakeToken: String?=null
-    var username: String?=null
+    var fakeToken: String? = null
+    var username: String? = null
 }

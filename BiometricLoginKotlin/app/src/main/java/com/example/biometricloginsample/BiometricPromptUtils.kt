@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
@@ -23,9 +22,12 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 
 // Since we are using the same methods in more than one Activity, better give them their own file.
-object BiometricPromptUtils{
+object BiometricPromptUtils {
     private val TAG = "BiometricPromptUtils"
-    fun createBiometricPrompt(activity:AppCompatActivity, processSuccess:(BiometricPrompt.AuthenticationResult) -> Unit): BiometricPrompt {
+    fun createBiometricPrompt(
+        activity: AppCompatActivity,
+        processSuccess: (BiometricPrompt.AuthenticationResult) -> Unit
+    ): BiometricPrompt {
         val executor = ContextCompat.getMainExecutor(activity)
 
         val callback = object : BiometricPrompt.AuthenticationCallback() {
@@ -49,7 +51,7 @@ object BiometricPromptUtils{
         return BiometricPrompt(activity, executor, callback)
     }
 
-     fun createPromptInfo(activity: AppCompatActivity): BiometricPrompt.PromptInfo {
+    fun createPromptInfo(activity: AppCompatActivity): BiometricPrompt.PromptInfo {
         val promptInfo = BiometricPrompt.PromptInfo.Builder().apply {
             setTitle(activity.getString(R.string.prompt_info_title))
             setSubtitle(activity.getString(R.string.prompt_info_subtitle))

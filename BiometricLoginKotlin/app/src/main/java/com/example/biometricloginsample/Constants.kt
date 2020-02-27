@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
@@ -17,4 +16,4 @@
 package com.example.biometricloginsample
 
 val SHARED_PREFS_FILENAME = "biometric_prefs"
-val CIPHERTEXT_WRAPPER ="ciphertext_wrapper"
+val CIPHERTEXT_WRAPPER = "ciphertext_wrapper"
