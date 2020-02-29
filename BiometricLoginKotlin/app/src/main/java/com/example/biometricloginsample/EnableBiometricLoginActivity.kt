@@ -107,7 +107,7 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
     }
 
     private fun encryptAndStoreServerToken(authResult: BiometricPrompt.AuthenticationResult) {
-        authResult?.cryptoObject?.cipher?.apply {
+        authResult.cryptoObject?.cipher?.apply {
             SampleAppUser.fakeToken?.let { token ->
                 Log.d(TAG, "The token from server is $token")
                 val encryptedServerTokenWrapper = cryptographyManager.encryptData(token, this)
