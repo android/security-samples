@@ -38,7 +38,7 @@ The sample app addresses the following critical user journeys:
 ## Suggested Reading
 - [One Biometric API Over all Android](https://android-developers.googleblog.com/2019/10/one-biometric-api-over-all-android.html)
 - [Migrating from FingerprintManager to BiometricPrompt](https://medium.com/androiddevelopers/migrating-from-fingerprintmanager-to-biometricprompt-4bc5f570dccd)
-- [Using BiometricPrompt with CryptoObject: How and Why]()
+- [Using BiometricPrompt with CryptoObject: How and Why](https://medium.com/androiddevelopers/using-biometricprompt-with-cryptoobject-how-and-why-aace500ccdb7)
 
 Screenshots
 -------------
