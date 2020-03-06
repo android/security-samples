@@ -18,17 +18,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
-    <item
-        android:id="@+id/menu_list_password"
-        android:title="Password"
-        app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_lock_outline"/>
-
     <item
         android:id="@+id/menu_list_add_item"
+        android:icon="@drawable/ic_add"
         android:title="Add"
-        app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_add"/>
+        app:showAsAction="ifRoom" />
 
 </menu>
