@@ -27,17 +27,20 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+/**
+ * Handles encryption and decryption
+ */
 interface CryptographyManager {
 
     /**
      * This method first gets or generates an instance of SecretKey and then initializes the Cipher
-     * with the key. The secret key uses [ENCRYPT_MODE][Cipher.ENCRYPT_MODE] is used.
+     * with the key. The secret key uses [ENCRYPT_MODE][Cipher.ENCRYPT_MODE].
      */
     fun getInitializedCipherForEncryption(keyName: String): Cipher
 
     /**
      * This method first gets or generates an instance of SecretKey and then initializes the Cipher
-     * with the key. The secret key uses [DECRYPT_MODE][Cipher.DECRYPT_MODE] is used.
+     * with the key. The secret key uses [DECRYPT_MODE][Cipher.DECRYPT_MODE].
      */
     fun getInitializedCipherForDecryption(keyName: String, initializationVector: ByteArray): Cipher
 

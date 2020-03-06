@@ -9,15 +9,15 @@ This is the canonical sample that demonstrates how to integrate Android Biometri
 Whether your project is for government, healthcare, financial, enterprise, or general usage, this
 sample should guide your implementation.
 
-## What this sample does not do
-- This sample does **not** teach you how to handle server side authentication
-- This sample does **not** teach you how to communicate with your servers
-
 ## What the sample does
 The sample app addresses the following critical user journeys:
 1. How to enable biometric login in your app.
 2. How to handle the server token for subsequent biometric login.
 3. How to actually login with biometric and release the server token for communication with the server.
+
+# What this sample does not do
+- This sample does **not** teach you how to handle server side authentication
+- This sample does **not** teach you how to communicate with your servers
 
 ## Suggested Reading
 - [One Biometric API Over all Android](https://android-developers.googleblog.com/2019/10/one-biometric-api-over-all-android.html)
