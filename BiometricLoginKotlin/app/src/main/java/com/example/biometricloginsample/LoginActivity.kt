@@ -38,12 +38,12 @@ import com.example.biometricloginsample.databinding.ActivityLoginBinding
  *   - b) if template exists, ask user to confirm by entering username & password
  */
 class LoginActivity : AppCompatActivity() {
-    val TAG = "LoginActivity"
-
+    private val TAG = "LoginActivity"
     private lateinit var biometricPrompt: BiometricPrompt
-    private lateinit var cryptographyManager: CryptographyManager
+    private val cryptographyManager = CryptographyManager()
     private lateinit var encryptedServerTokenWrapper: CiphertextWrapper
     private lateinit var binding: ActivityLoginBinding
+    private val loginWithPasswordViewModel by viewModels<LoginWithPasswordViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +53,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        cryptographyManager = CryptographyManager()
         val ciphertextWrapper = cryptographyManager.getCiphertextWrapperFromSharedPrefs(
             applicationContext,
             SHARED_PREFS_FILENAME,
@@ -83,7 +82,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-
 
     // BIOMETRICS SECTION
 
@@ -118,7 +116,6 @@ class LoginActivity : AppCompatActivity() {
     // USERNAME + PASSWORD SECTION
 
     private fun loginWithPasswordManager() {
-        val loginWithPasswordViewModel by viewModels<LoginWithPasswordViewModel>()
         loginWithPasswordViewModel.loginWithPasswordFormState.observe(this, Observer {
             val loginState = it ?: return@Observer
             when (loginState) {
@@ -164,7 +161,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun loginWithPassword(username: String, password: String) {
-        val loginWithPasswordViewModel by viewModels<LoginWithPasswordViewModel>()
         val succeeded = loginWithPasswordViewModel.login(username, password)
         if (succeeded) {
             updateApp(

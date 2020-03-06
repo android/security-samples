@@ -27,16 +27,15 @@ import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityEnableBiometricLoginBinding
 
 class EnableBiometricLoginActivity : AppCompatActivity() {
-
     private val TAG = "EnableBiometricLogin"
     private lateinit var cryptographyManager: CryptographyManager
+    private val loginViewModel by viewModels<LoginWithPasswordViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding = ActivityEnableBiometricLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.cancel.setOnClickListener { finish() }
-        val loginViewModel by viewModels<LoginWithPasswordViewModel>()
 
         loginViewModel.loginWithPasswordFormState.observe(this, Observer {
             val loginState = it ?: return@Observer
@@ -81,7 +80,6 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
     }
 
     private fun loginWithPassword(username: String, password: String) {
-        val loginViewModel by viewModels<LoginWithPasswordViewModel>()
         val succeeded = loginViewModel.login(username, password)
         if (succeeded) {
             // you need to save the userToken you got from the server. That way,

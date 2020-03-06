@@ -75,7 +75,7 @@ data class CiphertextWrapper(val ciphertext: ByteArray, val initializationVector
 
 private class CryptographyManagerImpl : CryptographyManager {
 
-    private val KEY_SIZE: Int = 256
+    private val KEY_SIZE = 256
     private val ANDROID_KEYSTORE = "AndroidKeyStore"
     private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
     private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
@@ -157,7 +157,7 @@ private class CryptographyManagerImpl : CryptographyManager {
         mode: Int,
         prefKey: String
     ): CiphertextWrapper? {
-        val json = context.getSharedPreferences(filename, mode).getString(prefKey, null) ?: null
+        val json = context.getSharedPreferences(filename, mode).getString(prefKey, null)
         return Gson().fromJson(json, CiphertextWrapper::class.java)
     }
 
