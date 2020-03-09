@@ -16,17 +16,20 @@
 
 package com.android.example.filelocker
 
+import android.os.Parcelable
 import androidx.recyclerview.widget.DiffUtil
+import kotlinx.android.parcel.Parcelize
 import java.net.URLDecoder
 import java.net.URLEncoder
 
 /**
  * A data object which represents a locally encrypted file.
  */
+@Parcelize
 data class Note(
     val title: String,
-    val path: String
-)
+    val path: String = title.urlEncode()
+) : Parcelable
 
 object NoteEntityDiff : DiffUtil.ItemCallback<Note>() {
     override fun areItemsTheSame(oldItem: Note, newItem: Note) = oldItem == newItem
@@ -36,9 +39,9 @@ object NoteEntityDiff : DiffUtil.ItemCallback<Note>() {
 /**
  * Extension method to decode a URL encoded a string.
  */
-fun String.urlDecode():String = URLDecoder.decode(this, "UTF-8")
+fun String.urlDecode(): String = URLDecoder.decode(this, "UTF-8")
 
 /**
  * Extension method to URL encode a string.
  */
-fun String.urlEncode():String = URLEncoder.encode(this, "UTF-8")
+fun String.urlEncode(): String = URLEncoder.encode(this, "UTF-8")

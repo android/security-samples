@@ -31,7 +31,7 @@
         android:name="com.android.example.filelocker.EditFragment"
         android:label="EditFragment">
         <argument
-            android:name="fileTitle"
-            app:argType="string"/>
+            android:name="note"
+            app:argType="com.android.example.filelocker.Note" />
     </fragment>
 </navigation>

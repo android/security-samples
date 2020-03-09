@@ -59,7 +59,7 @@ class ListFragment : Fragment(), NoteAdapter.NoteAdapterListener {
     override fun onNoteClicked(note: Note) {
         findNavController().navigate(
             ListFragmentDirections
-                .actionListFragmentToEditFragment(note.title)
+                .actionListFragmentToEditFragment(note)
         )
     }
 
@@ -67,7 +67,7 @@ class ListFragment : Fragment(), NoteAdapter.NoteAdapterListener {
         return when (item?.itemId) {
             R.id.menu_list_add_item -> {
                 findNavController().navigate(
-                    ListFragmentDirections.actionListFragmentToEditFragment("")
+                    ListFragmentDirections.actionListFragmentToEditFragment(Note("", ""))
                 )
                 true
             }

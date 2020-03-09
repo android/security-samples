@@ -17,6 +17,7 @@
 package com.android.example.filelocker
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -36,7 +37,7 @@ import java.io.File
 class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
     private lateinit var binding: FragmentEditBinding
-    private val existingFileTitle get() = navArgs<EditFragmentArgs>().value.fileTitle
+    private val existingNote get() = navArgs<EditFragmentArgs>().value.note
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,9 +59,9 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             toolbar.inflateMenu(R.menu.toolbar_edit_menu)
             toolbar.setOnMenuItemClickListener(this@EditFragment)
 
-            if (existingFileTitle.isNotBlank()) {
-                binding.titleEditText.setText(existingFileTitle)
-                binding.bodyEditText.setText(decryptFile(existingFileTitle))
+            if (existingNote.title.isNotBlank()) {
+                binding.titleEditText.setText(existingNote.title)
+                binding.bodyEditText.setText(decryptNote(existingNote))
             }
         }
 
@@ -80,7 +81,7 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 true
             }
             R.id.menu_edit_delete -> {
-                deleteFile(existingFileTitle)
+                deleteNote(existingNote)
                 findNavController().navigateUp()
                 true
             }
@@ -99,31 +100,32 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
         if (title.isBlank()) return
 
+        val newNote = Note(title, File(requireContext().filesDir, title.urlEncode()).toString())
         try {
-            deleteFile(existingFileTitle)
-            val encryptedFile = getEncryptedFile(title)
+            deleteNote(existingNote)
+            val encryptedFile = getNote(newNote)
             encryptedFile.openFileOutput().use { output ->
                 output.write(body.toByteArray())
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error saving note ($newNote)", e)
             showSnackbar(R.string.error_unable_to_save_file)
         }
     }
 
 
     /**
-     * Decrypt an encrypted file's body and return the plain text String.
+     * Decrypt a note and returns the plain text String.
      */
-    private fun decryptFile(title: String): String {
-        val encryptedFile = getEncryptedFile(title)
+    private fun decryptNote(note: Note): String {
+        val encryptedFile = getNote(note)
 
         try {
             encryptedFile.openFileInput().use { input ->
                 return String(input.readBytes(), Charsets.UTF_8)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error decrypting note ($note)", e)
             showSnackbar(R.string.error_unable_to_decrypt)
             return ""
         }
@@ -132,18 +134,18 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     /**
      * Delete a file from the directory.
      */
-    private fun deleteFile(title: String) {
-        if (title.isBlank()) return
-        val file = File(requireContext().filesDir, title.urlEncode())
+    private fun deleteNote(note: Note) {
+        if (note.title.isBlank()) return
+        val file = File(note.path)
         if (file.exists()) file.delete()
     }
 
     /**
      * Get an [EncryptedFile], used to encrypt and decrypt files using Jetpack Security
      */
-    private fun getEncryptedFile(name: String): EncryptedFile {
+    private fun getNote(note: Note): EncryptedFile {
         return EncryptedFile.Builder(
-            File(requireContext().filesDir, name.urlEncode()),
+            File(note.path),
             requireContext(),
             MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
             EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
@@ -154,3 +156,5 @@ class EditFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         Snackbar.make(binding.coordinator, messageRes, Snackbar.LENGTH_LONG).show()
     }
 }
+
+private const val TAG = "EditFragment"
