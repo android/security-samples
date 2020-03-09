@@ -26,7 +26,7 @@ import androidx.lifecycle.observe
 import androidx.navigation.fragment.findNavController
 import com.android.example.filelocker.databinding.FragmentListBinding
 
-class ListFragment : Fragment(), FileAdapter.FileAdapterListener {
+class ListFragment : Fragment(), NoteAdapter.NoteAdapterListener {
 
     private lateinit var binding: FragmentListBinding
 
@@ -42,7 +42,7 @@ class ListFragment : Fragment(), FileAdapter.FileAdapterListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = FileAdapter(this)
+        val adapter = NoteAdapter(this)
 
         binding.toolbar.inflateMenu(R.menu.toolbar_list_menu)
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
@@ -56,8 +56,11 @@ class ListFragment : Fragment(), FileAdapter.FileAdapterListener {
         }
     }
 
-    override fun onFileClicked(file: FileEntity) {
-        onEncryptedFileClicked(file)
+    override fun onNoteClicked(note: Note) {
+        findNavController().navigate(
+            ListFragmentDirections
+                .actionListFragmentToEditFragment(note.title)
+        )
     }
 
     private fun onMenuItemClick(item: MenuItem?): Boolean {
@@ -70,16 +73,5 @@ class ListFragment : Fragment(), FileAdapter.FileAdapterListener {
             }
             else -> false
         }
-    }
-
-    private fun onEncryptedFileClicked(file: FileEntity) {
-        editFile(file)
-    }
-
-    private fun editFile(file: FileEntity) {
-        findNavController().navigate(
-            ListFragmentDirections
-                .actionListFragmentToEditFragment(file.title)
-        )
     }
 }

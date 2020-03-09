@@ -20,10 +20,10 @@
     <data>
         <variable
             name="fileEntity"
-            type="com.android.example.filelocker.FileEntity" />
+            type="com.android.example.filelocker.Note" />
         <variable
             name="handler"
-            type="com.android.example.filelocker.FileAdapter.FileAdapterListener" />
+            type="com.android.example.filelocker.NoteAdapter.NoteAdapterListener" />
     </data>
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -35,7 +35,7 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="16dp"
         android:foreground="?attr/selectableItemBackground"
-        android:onClick="@{(view) -> handler.onFileClicked(fileEntity)}">
+        android:onClick="@{(view) -> handler.onNoteClicked(fileEntity)}">
 
         <TextView
             android:id="@+id/title_text_view"

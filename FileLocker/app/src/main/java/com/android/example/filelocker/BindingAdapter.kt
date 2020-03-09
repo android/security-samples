@@ -29,6 +29,7 @@ import androidx.databinding.BindingAdapter
 import com.google.android.material.shape.MaterialShapeDrawable
 
 @BindingAdapter("statusBarAdaptive")
+@Suppress("unused_parameter")
 fun View.bindStatusBarAdaptive(statusBarAdaptive: Boolean) {
     val bgColor = backgroundColor
     val luminance = ColorUtils.calculateLuminance(bgColor)

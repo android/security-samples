@@ -23,18 +23,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android.example.filelocker.databinding.FileItemLayoutBinding
 
 /**
- * A simple list adapter which displays a list of [FileEntity]s.
+ * A simple list adapter which displays a list of [Note]s.
  */
-class FileAdapter(
-    private val listener: FileAdapterListener
-) : ListAdapter<FileEntity, FileAdapter.FilesObjViewHolder>(FileEntityDiff) {
+class NoteAdapter(
+    private val listener: NoteAdapterListener
+) : ListAdapter<Note, NoteAdapter.NoteViewHolder>(NoteEntityDiff) {
 
-    interface FileAdapterListener {
-        fun onFileClicked(file: FileEntity)
+    interface NoteAdapterListener {
+        fun onNoteClicked(note: Note)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FilesObjViewHolder {
-        return FilesObjViewHolder(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
+        return NoteViewHolder(
             FileItemLayoutBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -44,18 +44,18 @@ class FileAdapter(
         )
     }
 
-    override fun onBindViewHolder(holder: FilesObjViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
 
-    inner class FilesObjViewHolder(
+    inner class NoteViewHolder(
         private val binding: FileItemLayoutBinding,
-        private val listener: FileAdapterListener
+        private val listener: NoteAdapterListener
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(file: FileEntity) {
+        fun bind(note: Note) {
             binding.apply {
-                fileEntity = file
+                fileEntity = note
                 handler = listener
                 executePendingBindings()
             }

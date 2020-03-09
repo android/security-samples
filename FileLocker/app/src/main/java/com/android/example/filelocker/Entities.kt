@@ -23,14 +23,14 @@ import java.net.URLEncoder
 /**
  * A data object which represents a locally encrypted file.
  */
-data class FileEntity(
+data class Note(
     val title: String,
     val path: String
 )
 
-object FileEntityDiff : DiffUtil.ItemCallback<FileEntity>() {
-    override fun areItemsTheSame(oldItem: FileEntity, newItem: FileEntity) = oldItem == newItem
-    override fun areContentsTheSame(oldItem: FileEntity, newItem: FileEntity) = oldItem == newItem
+object NoteEntityDiff : DiffUtil.ItemCallback<Note>() {
+    override fun areItemsTheSame(oldItem: Note, newItem: Note) = oldItem == newItem
+    override fun areContentsTheSame(oldItem: Note, newItem: Note) = oldItem == newItem
 }
 
 /**

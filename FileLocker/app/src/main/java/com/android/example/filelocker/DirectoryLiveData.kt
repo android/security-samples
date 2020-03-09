@@ -25,7 +25,7 @@ import java.io.File
  */
 class DirectoryLiveData(
     private val observationDir: File
-) : LiveData<List<FileEntity>>() {
+) : LiveData<List<Note>>() {
 
     @Suppress("deprecation")
     private val observer = object : FileObserver(observationDir.path) {
@@ -35,7 +35,7 @@ class DirectoryLiveData(
     }
 
     private fun dispatchFilesChanged() {
-        postValue(observationDir.listFiles()?.map { FileEntity(it.name.urlDecode(), it.path) }
+        postValue(observationDir.listFiles()?.map { Note(it.name.urlDecode(), it.path) }
             ?: emptyList())
     }
 
