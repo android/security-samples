@@ -165,4 +165,3 @@ private class CryptographyManagerImpl : CryptographyManager {
     }
 
 }
-

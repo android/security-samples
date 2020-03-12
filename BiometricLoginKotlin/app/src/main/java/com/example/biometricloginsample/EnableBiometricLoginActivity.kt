@@ -23,6 +23,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityEnableBiometricLoginBinding
 
@@ -47,32 +48,27 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
                 }
             }
         })
-
-        binding.username.afterTextChanged {
+        binding.username.doAfterTextChanged {
             loginViewModel.onLoginDataChanged(
                 binding.username.text.toString(),
                 binding.password.text.toString()
             )
         }
-
-        binding.password.apply {
-            afterTextChanged {
-                loginViewModel.onLoginDataChanged(
-                    binding.username.text.toString(),
-                    binding.password.text.toString()
-                )
+        binding.password.doAfterTextChanged {
+            loginViewModel.onLoginDataChanged(
+                binding.username.text.toString(),
+                binding.password.text.toString()
+            )
+        }
+        binding.password.setOnEditorActionListener { _, actionId, _ ->
+            when (actionId) {
+                EditorInfo.IME_ACTION_DONE ->
+                    loginWithPassword(
+                        binding.username.text.toString(),
+                        binding.password.text.toString()
+                    )
             }
-
-            setOnEditorActionListener { _, actionId, _ ->
-                when (actionId) {
-                    EditorInfo.IME_ACTION_DONE ->
-                        loginWithPassword(
-                            binding.username.text.toString(),
-                            binding.password.text.toString()
-                        )
-                }
-                false
-            }
+            false
         }
         binding.authorize.setOnClickListener {
             loginWithPassword(binding.username.text.toString(), binding.password.text.toString())

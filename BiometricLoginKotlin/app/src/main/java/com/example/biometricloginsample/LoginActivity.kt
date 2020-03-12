@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityLoginBinding
 
@@ -51,6 +52,10 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
     }
 
+    /**
+     * The logic is kept inside onResume instead of onCreate so that authorizing biometrics takes
+     * immediate effect.
+     */
     override fun onResume() {
         super.onResume()
         val ciphertextWrapper = cryptographyManager.getCiphertextWrapperFromSharedPrefs(
@@ -104,7 +109,7 @@ class LoginActivity : AppCompatActivity() {
             val plaintext =
                 cryptographyManager.decryptData(encryptedServerTokenWrapper.ciphertext, this)
             SampleAppUser.fakeToken = plaintext
-            // now that you have the token, you can query server for everything else
+            // Now that you have the token, you can query server for everything else
             // the only reason we call this fakeToken is because we didn't really get it from
             // the server. In your case, you will have gotten it from the server the first time
             // and therefore, it's a real token.
@@ -126,37 +131,31 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         })
-
-        binding.username.afterTextChanged {
+        binding.username.doAfterTextChanged {
             loginWithPasswordViewModel.onLoginDataChanged(
                 binding.useBiometrics.text.toString(),
                 binding.password.text.toString()
             )
         }
-
-        binding.password.apply {
-            afterTextChanged {
-                loginWithPasswordViewModel.onLoginDataChanged(
-                    binding.username.text.toString(),
-                    binding.password.text.toString()
-                )
+        binding.password.doAfterTextChanged {
+            loginWithPasswordViewModel.onLoginDataChanged(
+                binding.username.text.toString(),
+                binding.password.text.toString()
+            )
+        }
+        binding.password.setOnEditorActionListener { _, actionId, _ ->
+            when (actionId) {
+                EditorInfo.IME_ACTION_DONE ->
+                    loginWithPassword(
+                        binding.username.text.toString(),
+                        binding.password.text.toString()
+                    )
             }
-
-            setOnEditorActionListener { _, actionId, _ ->
-                when (actionId) {
-                    EditorInfo.IME_ACTION_DONE ->
-                        loginWithPassword(
-                            binding.username.text.toString(),
-                            binding.password.text.toString()
-                        )
-                }
-                false
-            }
+            false
         }
         binding.login.setOnClickListener {
             loginWithPassword(binding.username.text.toString(), binding.login.text.toString())
         }
-
         Log.d(TAG, "Username ${SampleAppUser.username}; fake token ${SampleAppUser.fakeToken}")
     }
 
@@ -173,18 +172,4 @@ class LoginActivity : AppCompatActivity() {
     private fun updateApp(successMsg: String) {
         binding.success.text = successMsg
     }
-}
-
-//Extension functions
-
-fun AppCompatEditText.afterTextChanged(task: () -> Unit) {
-    addTextChangedListener(object : TextWatcher {
-        override fun afterTextChanged(editable: Editable?) {
-            task()
-        }
-
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-
-        override fun onTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-    })
 }
