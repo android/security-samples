@@ -18,13 +18,10 @@ package com.example.biometricloginsample
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.widget.doAfterTextChanged
@@ -75,7 +72,7 @@ class LoginActivity : AppCompatActivity() {
                 updateApp(getString(R.string.already_signedin))
             }
         } else {
-            loginWithPasswordManager()
+            setupForLoginWithPassword()
         }
 
         binding.useBiometrics.setOnClickListener {
@@ -120,7 +117,7 @@ class LoginActivity : AppCompatActivity() {
 
     // USERNAME + PASSWORD SECTION
 
-    private fun loginWithPasswordManager() {
+    private fun setupForLoginWithPassword() {
         loginWithPasswordViewModel.loginWithPasswordFormState.observe(this, Observer {
             val loginState = it ?: return@Observer
             when (loginState) {

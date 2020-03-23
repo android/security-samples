@@ -32,16 +32,8 @@ import javax.crypto.spec.GCMParameterSpec
  */
 interface CryptographyManager {
 
-    /**
-     * This method first gets or generates an instance of SecretKey and then initializes the Cipher
-     * with the key. The secret key uses [ENCRYPT_MODE][Cipher.ENCRYPT_MODE].
-     */
     fun getInitializedCipherForEncryption(keyName: String): Cipher
 
-    /**
-     * This method first gets or generates an instance of SecretKey and then initializes the Cipher
-     * with the key. The secret key uses [DECRYPT_MODE][Cipher.DECRYPT_MODE].
-     */
     fun getInitializedCipherForDecryption(keyName: String, initializationVector: ByteArray): Cipher
 
     /**
@@ -73,9 +65,10 @@ interface CryptographyManager {
 
 fun CryptographyManager(): CryptographyManager = CryptographyManagerImpl()
 
-data class CiphertextWrapper(val ciphertext: ByteArray, val initializationVector: ByteArray)
-
-
+/**
+ * To get an instance of this private CryptographyManagerImpl class, use the top-level function
+ * fun CryptographyManager(): CryptographyManager = CryptographyManagerImpl()
+ */
 private class CryptographyManagerImpl : CryptographyManager {
 
     private val KEY_SIZE = 256
@@ -163,5 +156,7 @@ private class CryptographyManagerImpl : CryptographyManager {
         val json = context.getSharedPreferences(filename, mode).getString(prefKey, null)
         return Gson().fromJson(json, CiphertextWrapper::class.java)
     }
-
 }
+
+
+data class CiphertextWrapper(val ciphertext: ByteArray, val initializationVector: ByteArray)
