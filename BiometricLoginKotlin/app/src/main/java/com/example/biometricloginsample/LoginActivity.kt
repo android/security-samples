@@ -28,7 +28,6 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityLoginBinding
 
-
 /**
  * 1) after entering "valid" username and password, login button becomes enabled
  * 2) User clicks biometrics?
@@ -39,7 +38,13 @@ class LoginActivity : AppCompatActivity() {
     private val TAG = "LoginActivity"
     private lateinit var biometricPrompt: BiometricPrompt
     private val cryptographyManager = CryptographyManager()
-    private lateinit var encryptedServerTokenWrapper: CiphertextWrapper
+    private val ciphertextWrapper
+        get() = cryptographyManager.getCiphertextWrapperFromSharedPrefs(
+            applicationContext,
+            SHARED_PREFS_FILENAME,
+            Context.MODE_PRIVATE,
+            CIPHERTEXT_WRAPPER
+        )
     private lateinit var binding: ActivityLoginBinding
     private val loginWithPasswordViewModel by viewModels<LoginWithPasswordViewModel>()
 
@@ -47,6 +52,16 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.useBiometrics.setOnClickListener {
+            if (ciphertextWrapper != null) {
+                showBiometricPromptForDecryption()
+            } else {
+                startActivity(Intent(this, EnableBiometricLoginActivity::class.java))
+            }
+        }
+        if(ciphertextWrapper == null){
+            setupForLoginWithPassword()
+        }
     }
 
     /**
@@ -55,32 +70,14 @@ class LoginActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
-        val ciphertextWrapper = cryptographyManager.getCiphertextWrapperFromSharedPrefs(
-            applicationContext,
-            SHARED_PREFS_FILENAME,
-            Context.MODE_PRIVATE,
-            CIPHERTEXT_WRAPPER
-        )
 
         if (ciphertextWrapper != null) {
             if (SampleAppUser.fakeToken == null) {
-                encryptedServerTokenWrapper = ciphertextWrapper
                 showBiometricPromptForDecryption()
             } else {
                 // The user has already logged in, so proceed to the rest of the app
                 // this is a todo for you, the developer
                 updateApp(getString(R.string.already_signedin))
-            }
-        } else {
-            setupForLoginWithPassword()
-        }
-
-        binding.useBiometrics.setOnClickListener {
-            if (ciphertextWrapper != null) {
-                encryptedServerTokenWrapper = ciphertextWrapper
-                showBiometricPromptForDecryption()
-            } else {
-                startActivity(Intent(this, EnableBiometricLoginActivity::class.java))
             }
         }
     }
@@ -92,7 +89,7 @@ class LoginActivity : AppCompatActivity() {
         if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
             val secretKeyName = getString(R.string.secret_key_name)
             val cipher = cryptographyManager.getInitializedCipherForDecryption(
-                secretKeyName, encryptedServerTokenWrapper.initializationVector
+                secretKeyName, ciphertextWrapper!!.initializationVector
             )
             biometricPrompt =
                 BiometricPromptUtils.createBiometricPrompt(this, ::decryptServerTokenFromStorage)
@@ -104,7 +101,7 @@ class LoginActivity : AppCompatActivity() {
     private fun decryptServerTokenFromStorage(authResult: BiometricPrompt.AuthenticationResult) {
         authResult?.cryptoObject?.cipher?.apply {
             val plaintext =
-                cryptographyManager.decryptData(encryptedServerTokenWrapper.ciphertext, this)
+                cryptographyManager.decryptData(ciphertextWrapper!!.ciphertext, this)
             SampleAppUser.fakeToken = plaintext
             // Now that you have the token, you can query server for everything else
             // the only reason we call this fakeToken is because we didn't really get it from
