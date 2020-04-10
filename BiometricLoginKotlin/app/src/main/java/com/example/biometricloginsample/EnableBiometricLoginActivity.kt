@@ -48,6 +48,12 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
                 }
             }
         })
+        loginViewModel.loginResult.observe(this, Observer {
+            val loginResult = it ?: return@Observer
+            if (loginResult.success) {
+                showBiometricPromptForEncryption()
+            }
+        })
         binding.username.doAfterTextChanged {
             loginViewModel.onLoginDataChanged(
                 binding.username.text.toString(),
@@ -63,7 +69,7 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
         binding.password.setOnEditorActionListener { _, actionId, _ ->
             when (actionId) {
                 EditorInfo.IME_ACTION_DONE ->
-                    loginWithPassword(
+                    loginViewModel.login(
                         binding.username.text.toString(),
                         binding.password.text.toString()
                     )
@@ -71,19 +77,7 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
             false
         }
         binding.authorize.setOnClickListener {
-            loginWithPassword(binding.username.text.toString(), binding.password.text.toString())
-        }
-    }
-
-    private fun loginWithPassword(username: String, password: String) {
-        val succeeded = loginViewModel.login(username, password)
-        if (succeeded) {
-            // you need to save the userToken you got from the server. That way,
-            // next time the user authenticates with biometrics, you will have the token for
-            // server calls. Use BiometricPrompt.CryptoObject to guard access to the token,
-            // that way, the user really must authenticate to get access to the server userToken.
-
-            showBiometricPromptForEncryption()
+            loginViewModel.login(binding.username.text.toString(), binding.password.text.toString())
         }
     }
 

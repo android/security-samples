@@ -59,7 +59,7 @@ class LoginActivity : AppCompatActivity() {
                 startActivity(Intent(this, EnableBiometricLoginActivity::class.java))
             }
         }
-        if(ciphertextWrapper == null){
+        if (ciphertextWrapper == null) {
             setupForLoginWithPassword()
         }
     }
@@ -85,30 +85,37 @@ class LoginActivity : AppCompatActivity() {
     // BIOMETRICS SECTION
 
     private fun showBiometricPromptForDecryption() {
-        val canAuthenticate = BiometricManager.from(applicationContext).canAuthenticate()
-        if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
-            val secretKeyName = getString(R.string.secret_key_name)
-            val cipher = cryptographyManager.getInitializedCipherForDecryption(
-                secretKeyName, ciphertextWrapper!!.initializationVector
-            )
-            biometricPrompt =
-                BiometricPromptUtils.createBiometricPrompt(this, ::decryptServerTokenFromStorage)
-            val promptInfo = BiometricPromptUtils.createPromptInfo(this)
-            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+        ciphertextWrapper?.let { textWrapper ->
+            val canAuthenticate = BiometricManager.from(applicationContext).canAuthenticate()
+            if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
+                val secretKeyName = getString(R.string.secret_key_name)
+                val cipher = cryptographyManager.getInitializedCipherForDecryption(
+                    secretKeyName, textWrapper.initializationVector
+                )
+                biometricPrompt =
+                    BiometricPromptUtils.createBiometricPrompt(
+                        this,
+                        ::decryptServerTokenFromStorage
+                    )
+                val promptInfo = BiometricPromptUtils.createPromptInfo(this)
+                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            }
         }
     }
 
     private fun decryptServerTokenFromStorage(authResult: BiometricPrompt.AuthenticationResult) {
-        authResult?.cryptoObject?.cipher?.apply {
-            val plaintext =
-                cryptographyManager.decryptData(ciphertextWrapper!!.ciphertext, this)
-            SampleAppUser.fakeToken = plaintext
-            // Now that you have the token, you can query server for everything else
-            // the only reason we call this fakeToken is because we didn't really get it from
-            // the server. In your case, you will have gotten it from the server the first time
-            // and therefore, it's a real token.
+        ciphertextWrapper?.let { textWrapper ->
+            authResult?.cryptoObject?.cipher?.let {
+                val plaintext =
+                    cryptographyManager.decryptData(textWrapper.ciphertext, it)
+                SampleAppUser.fakeToken = plaintext
+                // Now that you have the token, you can query server for everything else
+                // the only reason we call this fakeToken is because we didn't really get it from
+                // the server. In your case, you will have gotten it from the server the first time
+                // and therefore, it's a real token.
 
-            updateApp(getString(R.string.already_signedin))
+                updateApp(getString(R.string.already_signedin))
+            }
         }
     }
 
@@ -125,9 +132,18 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         })
+        loginWithPasswordViewModel.loginResult.observe(this, Observer {
+            val loginResult = it ?: return@Observer
+            if (loginResult.success) {
+                updateApp(
+                    "You successfully signed up using password as: user " +
+                            "${SampleAppUser.username} with fake token ${SampleAppUser.fakeToken}"
+                )
+            }
+        })
         binding.username.doAfterTextChanged {
             loginWithPasswordViewModel.onLoginDataChanged(
-                binding.useBiometrics.text.toString(),
+                binding.username.text.toString(),
                 binding.password.text.toString()
             )
         }
@@ -140,7 +156,7 @@ class LoginActivity : AppCompatActivity() {
         binding.password.setOnEditorActionListener { _, actionId, _ ->
             when (actionId) {
                 EditorInfo.IME_ACTION_DONE ->
-                    loginWithPassword(
+                    loginWithPasswordViewModel.login(
                         binding.username.text.toString(),
                         binding.password.text.toString()
                     )
@@ -148,19 +164,12 @@ class LoginActivity : AppCompatActivity() {
             false
         }
         binding.login.setOnClickListener {
-            loginWithPassword(binding.username.text.toString(), binding.login.text.toString())
-        }
-        Log.d(TAG, "Username ${SampleAppUser.username}; fake token ${SampleAppUser.fakeToken}")
-    }
-
-    private fun loginWithPassword(username: String, password: String) {
-        val succeeded = loginWithPasswordViewModel.login(username, password)
-        if (succeeded) {
-            updateApp(
-                "You successfully signed up using password as: user " +
-                        "${SampleAppUser.username} with fake token ${SampleAppUser.fakeToken}"
+            loginWithPasswordViewModel.login(
+                binding.username.text.toString(),
+                binding.login.text.toString()
             )
         }
+        Log.d(TAG, "Username ${SampleAppUser.username}; fake token ${SampleAppUser.fakeToken}")
     }
 
     private fun updateApp(successMsg: String) {

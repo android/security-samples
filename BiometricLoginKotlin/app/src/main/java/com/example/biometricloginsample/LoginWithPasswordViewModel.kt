@@ -25,6 +25,9 @@ class LoginWithPasswordViewModel : ViewModel() {
     private val _loginForm = MutableLiveData<LoginFormState>()
     val loginWithPasswordFormState: LiveData<LoginFormState> = _loginForm
 
+    private val _loginResult = MutableLiveData<LoginResult>()
+    val loginResult: LiveData<LoginResult> = _loginResult
+
     fun onLoginDataChanged(username: String, password: String) {
         if (!isUserNameValid(username)) {
             _loginForm.value = FailedLoginFormState(usernameError = R.string.invalid_username)
@@ -49,7 +52,7 @@ class LoginWithPasswordViewModel : ViewModel() {
         return password.length > 5
     }
 
-    fun login(username: String, password: String): Boolean {
+    fun login(username: String, password: String) {
         if (isUserNameValid(username) && isPasswordValid(password)) {
             // Normally this method would asynchronously send this to your server and your sever
             // would return a token. For high sensitivity apps such as banking, you would keep that
@@ -60,8 +63,9 @@ class LoginWithPasswordViewModel : ViewModel() {
 
             SampleAppUser.username = username
             SampleAppUser.fakeToken = java.util.UUID.randomUUID().toString()
-            return true
+            _loginResult.value = LoginResult(true)
+        } else {
+            _loginResult.value = LoginResult(true)
         }
-        return false
     }
 }
