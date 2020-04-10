@@ -16,9 +16,11 @@
 package com.example.biometricloginsample
 
 sealed class LoginFormState
-
+/**
+ * Data validation state of the login form.
+ */
 class LoginState {
-    data class Failed(val usernameError: Int? = null,val passwordError: Int? = null)
+    data class Failed(val usernameError: Int? = null, val passwordError: Int? = null)
     data class Successful(val isDataValid: Boolean = false)
 }
 
