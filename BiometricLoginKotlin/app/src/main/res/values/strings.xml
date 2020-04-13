@@ -1,0 +1,35 @@
+<!--
+     Copyright (C) 2020 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License
+     -->
+<resources>
+    <string name="app_name">Biometric Login Sample</string>
+    <string name="username_hint">phone number, email, or username</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="password">Password</string>
+
+    <string name="prompt_info_title">Sample App Authentication</string>
+    <string name="prompt_info_subtitle">Please login to get access</string>
+    <string name="prompt_info_description">Sample App is using Android biometric authentication</string>
+    <string name="prompt_info_use_app_password">Use app password</string>
+    <string name="secret_key_name">biometric_sample_encryption_key</string>
+    <string name="btn_login">Login</string>
+    <string name="btn_biometric_authorization">Use biometrics</string>
+    <string name="enable_biometric_login">Enable Biometric Login</string>
+    <string name="desc_biometrics_authorization">Enter your login ID and password to confirm activation of Biometric Login.</string>
+    <string name="btn_authorize">Authorize</string>
+    <string name="already_signedin">You are now done with login. Move to your real MainActivity</string>
+    <string name="cancel">Cancel</string>
+</resources>
