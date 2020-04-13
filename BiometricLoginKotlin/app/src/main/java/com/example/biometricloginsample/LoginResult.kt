@@ -15,4 +15,4 @@
  */
 package com.example.biometricloginsample
 
-data class LoginResult( val success: Boolean = false)
+data class LoginResult(val success: Boolean = false)

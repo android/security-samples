@@ -38,8 +38,8 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.cancel.setOnClickListener { finish() }
 
-        loginViewModel.loginWithPasswordFormState.observe(this, Observer {
-            val loginState = it ?: return@Observer
+        loginViewModel.loginWithPasswordFormState.observe(this, Observer { formState ->
+            val loginState = formState ?: return@Observer
             when (loginState) {
                 is SuccessfulLoginFormState -> binding.authorize.isEnabled = loginState.isDataValid
                 is FailedLoginFormState -> {

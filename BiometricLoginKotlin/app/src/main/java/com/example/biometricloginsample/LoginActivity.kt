@@ -105,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun decryptServerTokenFromStorage(authResult: BiometricPrompt.AuthenticationResult) {
         ciphertextWrapper?.let { textWrapper ->
-            authResult?.cryptoObject?.cipher?.let {
+            authResult.cryptoObject?.cipher?.let {
                 val plaintext =
                     cryptographyManager.decryptData(textWrapper.ciphertext, it)
                 SampleAppUser.fakeToken = plaintext
@@ -122,8 +122,8 @@ class LoginActivity : AppCompatActivity() {
     // USERNAME + PASSWORD SECTION
 
     private fun setupForLoginWithPassword() {
-        loginWithPasswordViewModel.loginWithPasswordFormState.observe(this, Observer {
-            val loginState = it ?: return@Observer
+        loginWithPasswordViewModel.loginWithPasswordFormState.observe(this, Observer { formState ->
+            val loginState = formState ?: return@Observer
             when (loginState) {
                 is SuccessfulLoginFormState -> binding.login.isEnabled = loginState.isDataValid
                 is FailedLoginFormState -> {
