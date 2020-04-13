@@ -1,0 +1,63 @@
+/*
+ * Copyright (C) 2020 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 29
+    defaultConfig {
+        applicationId "com.example.biometricloginsample"
+        minSdkVersion 23
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    viewBinding {
+        enabled = true
+    }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:$app_compat_version"
+    implementation "androidx.biometric:biometric:$biometric_version"
+    implementation "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
+    implementation "androidx.core:core-ktx:$core_ktx_version"
+    implementation "androidx.fragment:fragment-ktx:$fragment_ktx_version"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    implementation "com.google.code.gson:gson:$gson_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    testImplementation "junit:junit:$junit_versoin"
+    androidTestImplementation "androidx.test.ext:junit:$ext_junit_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
+}
