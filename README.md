@@ -26,3 +26,12 @@ FIDO2 API is used for devices running Android N (API level 24) or newer.
 
 A sample that demonstrates how to use the Jetpack Security library to encrypt and decrypt files by
 implementing a simple note taking app.
+
+## ProGurad
+
+```pro
+# Protobuf
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+  <fields>;
+}
+```
