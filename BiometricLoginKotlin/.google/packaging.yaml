@@ -24,7 +24,6 @@ languages:    [Kotlin]
 solutions:    [Mobile]
 github:       android/security
 level:        INTERMEDIATE
-icon:         screenshots/authorize_bio.png
 apiRefs:
     - android:androidx.biometric.BiometricManager
     - androidx.biometric.BiometricPrompt
