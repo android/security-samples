@@ -26,5 +26,5 @@ github:       android/security
 level:        INTERMEDIATE
 apiRefs:
     - android:androidx.biometric.BiometricManager
-    - androidx.biometric.BiometricPrompt
+    - android:androidx.biometric.BiometricPrompt
 license: apache2
