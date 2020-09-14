@@ -27,6 +27,6 @@ github:       android/security-samples
 level:        INTERMEDIATE
 icon:         screenshots/notes-list.png
 apiRefs:
-    - androidx.security.crypto.EncryptedFile
-    - androidx.security.crypto.EncryptedSharedPreferences
+    - android:androidx.security.crypto.EncryptedFile
+    - android:androidx.security.crypto.EncryptedSharedPreferences
 license: apache2
