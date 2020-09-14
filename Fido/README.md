@@ -25,6 +25,9 @@ cases, the relying party should implement their own storage.
 The FIDO2 API entry point is the
 [`Fido2ApiClient`](https://developers.google.com/android/reference/com/google/android/gms/fido/fido2/Fido2ApiClient).
 
+Code Example
+------------
+
 ```
 /* Get an instance of the API client. */
 Fido2ApiClient fido2ApiClient = Fido.getFido2ApiClient(this /* calling activity */);

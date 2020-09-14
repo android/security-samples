@@ -1,5 +1,5 @@
 
-Android FingerprintDialog Sample (Kotlin)
+Android BiometricAuthentication Sample (Kotlin)
 =========================================
 
 A sample that demonstrates to use registered fingerprints to authenticate the user in your app
