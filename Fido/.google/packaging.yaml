@@ -26,12 +26,12 @@ solutions:    [Mobile]
 github:       android/security
 level:        INTERMEDIATE
 apiRefs:
-    - android:com.google.android.gms.fido.Fido
-    - android:com.google.android.gms.fido.fido2.Fido2ApiClient
-    - android:com.google.android.gms.fido.fido2.Fido2PendingIntent
-    - android:com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse
-    - android:com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse
-    - android:com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
-    - android:com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions
-    - android:com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRequestOptions
+    - gms:com.google.android.gms.fido.Fido
+    - gms:com.google.android.gms.fido.fido2.Fido2ApiClient
+    - gms:com.google.android.gms.fido.fido2.Fido2PendingIntent
+    - gms:com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse
+    - gms:com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse
+    - gms:com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
+    - gms:com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions
+    - gms:com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRequestOptions
 license: apache2
