@@ -35,8 +35,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    viewBinding {
-        enabled = true
+    buildFeatures {
+      viewBinding = true
     }
     compileOptions {
         sourceCompatibility = 1.8

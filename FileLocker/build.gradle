@@ -20,7 +20,7 @@ buildscript {
         constraint_layout_version = '1.1.3'
         coroutines_version = '1.2.1'
         espresso_version = '3.2.0'
-        gradleVersion = '3.5.1'
+        gradleVersion = '4.2.1'
         junit_version = '4.12'
         kotlin_version = '1.3.50'
         ktx_version = '1.1.0'
@@ -33,7 +33,7 @@ buildscript {
     }
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$gradleVersion"
@@ -45,7 +45,7 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
