@@ -22,4 +22,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "App Installer"
-include ':app'
+include(":app")
