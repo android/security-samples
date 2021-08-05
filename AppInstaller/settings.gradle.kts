@@ -21,5 +21,8 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+enableFeaturePreview("VERSION_CATALOGS")
+
 rootProject.name = "App Installer"
 include(":app")
