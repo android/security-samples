@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package com.samples.appinstaller
+syntax = "proto3";
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+option java_package = "com.samples.appinstaller";
+option java_multiple_files = true;
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
+message AppSettings {
+
+  enum AutoUpdateSchedule {
+    MANUAL = 0;
+    EVERY_15_MINUTES = 1;
+    EVERY_30_MINUTES = 2;
+    EVERY_60_MINUTES = 3;
+  }
+
+  enum UpdateAvailabilityPeriod {
+    NONE = 0;
+    AFTER_30_SECONDS = 1;
+    AFTER_5_MINUTES = 2;
+    AFTER_15_MINUTES = 3;
+    AFTER_30_MINUTES = 4;
+    AFTER_60_MINUTES = 5;
+  }
+
+  AutoUpdateSchedule autoUpdateSchedule = 1;
+  UpdateAvailabilityPeriod updateAvailabilityPeriod = 2;
 }

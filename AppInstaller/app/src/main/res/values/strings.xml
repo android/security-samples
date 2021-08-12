@@ -16,4 +16,10 @@
 
 <resources>
     <string name="app_name">App Installer</string>
+
+    <!-- Settings screen -->
+    <string name="auto_update_title">Auto-update Settings</string>
+    <string name="autoupdate_settings_description">DemoStore will update (or not) automatically apps it has installed based on these settings</string>
+    <string name="auto_update_schedule_label">Auto-update Schedule</string>
+    <string name="update_availability_period_label">Time between install and update availability</string>
 </resources>

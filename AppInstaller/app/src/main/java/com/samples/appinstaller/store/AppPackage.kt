@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.samples.appinstaller
+package com.samples.appinstaller.store
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import androidx.annotation.DrawableRes
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
-    }
+data class AppPackage(
+    val id: Int,
+    val name: String,
+    val label: String,
+    val company: String,
+    @DrawableRes val icon: Int,
+    val status: AppStatus = AppStatus.UNINSTALLED,
+    val updatedAt: Long = -1
+)
+
+enum class AppStatus {
+    UNINSTALLED, INSTALLED, INSTALLING, UPGRADING
 }

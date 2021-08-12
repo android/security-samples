@@ -23,12 +23,32 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.0.0")
         classpath(kotlin("gradle-plugin", version = "1.5.21"))
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.38.1")
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle.kts files
     }
 }
 
-tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+plugins {
+    id("com.diffplug.spotless") version "5.12.5"
+}
+
+subprojects {
+    apply(plugin = "com.diffplug.spotless")
+
+    spotless {
+        kotlin {
+            target("**/*.kt")
+            ktlint("0.41.0")
+
+            licenseHeaderFile(project.rootProject.file("spotless/copyright.txt"))
+        }
+
+        groovyGradle {
+            target("**/*.gradle")
+            greclipse().configFile(rootProject.file("spotless/greclipse.properties"))
+            licenseHeaderFile(project.rootProject.file("spotless/copyright.txt"), "(buildscript|apply|import|plugins)")
+        }
+    }
 }

@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
 import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 plugins {
     id("com.android.application")
     kotlin("android")
     id("com.google.protobuf") version "0.8.12"
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -30,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "com.samples.appinstaller"
-        minSdk = 29
+        minSdk = 31
         targetSdk = 30
         versionCode = 1
         versionName = "1.0"
@@ -77,12 +79,16 @@ dependencies {
     implementation(libs.compose.icons)
     implementation(libs.lifecycle.runtimeKtx)
     implementation(libs.navigation.compose)
-    implementation(libs.navigation.compose)
 
     implementation(libs.protobuf.javalite)
     implementation(libs.datastore)
 
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.androidCompiler)
+
     implementation(libs.workmanager.runtimeKtx)
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.workCompiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTest.junit)
