@@ -28,12 +28,12 @@ plugins {
 }
 
 android {
-    compileSdkPreview = "android-S"
+    compileSdk = 31
 
     defaultConfig {
         applicationId = "com.samples.appinstaller"
         minSdk = 31
-        targetSdk = 30
+        targetSdk = 31
         versionCode = 1
         versionName = "1.0"
 
