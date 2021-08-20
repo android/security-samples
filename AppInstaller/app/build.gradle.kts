@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.compose.toolingPreview)
     implementation(libs.compose.icons)
     implementation(libs.lifecycle.runtimeKtx)
+    implementation(libs.lifecycle.livedataKtx)
     implementation(libs.navigation.compose)
 
     implementation(libs.protobuf.javalite)
@@ -95,6 +96,10 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.compose.junit)
     debugImplementation(libs.compose.tooling)
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 protobuf {

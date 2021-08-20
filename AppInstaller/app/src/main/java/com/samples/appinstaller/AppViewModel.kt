@@ -17,8 +17,10 @@
 package com.samples.appinstaller
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.asLiveData
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -41,13 +43,7 @@ class AppViewModel @Inject constructor(
     val isPermissionGranted: Boolean
         get() = repository.canInstallPackages()
 
-    val appSettings = context.appSettings.data.stateIn(
-        viewModelScope,
-        WhileSubscribed(),
-        AppSettings.getDefaultInstance()
-    )
-
-//    private val _apps = MutableStateFlow(StoreRepository.getApps())
+    val settings: LiveData<AppSettings> = context.appSettings.data.asLiveData()
     val apps: StateFlow<List<AppPackage>> = repository.apps
 
 //    init {
