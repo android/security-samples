@@ -46,7 +46,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -104,7 +107,8 @@ kapt {
 
 protobuf {
     protoc {
-        artifact = "${libs.protobuf.protoc.get().module}:${libs.protobuf.protoc.get().versionConstraint}"
+        artifact =
+            "${libs.protobuf.protoc.get().module}:${libs.protobuf.protoc.get().versionConstraint}"
     }
 
     generateProtoTasks {

@@ -81,7 +81,7 @@ fun AppItem(
                 Spacer(Modifier.height(5.dp))
 
                 Row(Modifier.fillMaxWidth()) {
-                    when(app.status) {
+                    when (app.status) {
                         AppStatus.UNINSTALLED -> {
                             Button(modifier = Modifier.weight(1f), onClick = { onInstall(app) }) {
                                 Text("Install")
