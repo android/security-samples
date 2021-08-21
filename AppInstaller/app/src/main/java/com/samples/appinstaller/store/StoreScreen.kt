@@ -16,6 +16,7 @@
 
 package com.samples.appinstaller.store
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -115,9 +116,14 @@ fun AppItem(
         overlineText = { Text(app.company) },
         secondaryText = {
             Column {
-                Text("Installed 2 days ago")
-                Spacer(Modifier.height(5.dp))
+                if (app.updatedAt > -1) {
+                    val installationPeriod = DateUtils.getRelativeTimeSpanString(app.updatedAt)
+                    Text("Installed $installationPeriod")
+                } else {
+                    Text("Not installed")
+                }
 
+                Spacer(Modifier.height(5.dp))
                 Row(Modifier.fillMaxWidth()) {
                     when (app.status) {
                         AppStatus.UNINSTALLED -> {
