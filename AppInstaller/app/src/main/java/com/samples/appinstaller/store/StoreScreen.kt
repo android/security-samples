@@ -70,11 +70,11 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
     fun install(app: AppPackage) = viewModel.installApp(app)
     fun upgrade(app: AppPackage) = viewModel.installApp(app)
     fun uninstall(app: AppPackage) = viewModel.uninstallApp(app)
-    fun open(app: AppPackage) = viewModel.installApp(app)
+    fun open(app: AppPackage) = viewModel.openApp(app)
     fun cancel(app: AppPackage) = viewModel.cancelInstall(app)
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("App Installer") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
         bottomBar = {
             BottomNavigation {
                 BottomNavigationItem(

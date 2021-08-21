@@ -94,7 +94,7 @@ fun PermissionScreen(navController: NavController, viewModel: AppViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("App Installer") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
         content = { innerPadding ->
             Column(
                 modifier = Modifier

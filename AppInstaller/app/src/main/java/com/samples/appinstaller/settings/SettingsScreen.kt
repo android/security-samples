@@ -55,7 +55,7 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("App Installer") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
         bottomBar = {
             BottomNavigation {
                 BottomNavigationItem(
@@ -75,7 +75,10 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
             }
         },
         content = { innerPadding ->
-            Column(Modifier.padding(innerPadding).padding(vertical = 16.dp)) {
+            Column(
+                Modifier
+                    .padding(innerPadding)
+                    .padding(vertical = 16.dp)) {
                 Text(
                     text = stringResource(R.string.auto_update_title),
                     style = MaterialTheme.typography.h6,
