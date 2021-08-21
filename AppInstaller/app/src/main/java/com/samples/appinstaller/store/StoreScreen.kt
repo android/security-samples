@@ -66,7 +66,7 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
 
     fun install(app: AppPackage) = viewModel.installApp(app)
     fun upgrade(app: AppPackage) = viewModel.installApp(app)
-    fun uninstall(app: AppPackage) = viewModel.installApp(app)
+    fun uninstall(app: AppPackage) = viewModel.uninstallApp(app)
     fun open(app: AppPackage) = viewModel.installApp(app)
     fun cancel(app: AppPackage) = viewModel.cancelInstall(app)
 

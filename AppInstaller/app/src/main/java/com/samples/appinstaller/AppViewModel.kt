@@ -44,9 +44,12 @@ class AppViewModel @Inject constructor(
     val apps: StateFlow<List<AppPackage>> = repository.apps
     val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
 
-    /**
-     * Install app by creating an install session and write the app's apk in it.
-     */
+    init {
+        viewModelScope.launch {
+            repository.loadLibrary()
+        }
+    }
+
     fun installApp(app: AppPackage) {
         val installWorkRequest = OneTimeWorkRequestBuilder<InstallWorker>()
             .addTag(app.name)
@@ -61,5 +64,9 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch {
             repository.abandonInstallSessions(app.name)
         }
+    }
+
+    fun uninstallApp(app: AppPackage) {
+        repository.uninstallApp(app.name)
     }
 }
