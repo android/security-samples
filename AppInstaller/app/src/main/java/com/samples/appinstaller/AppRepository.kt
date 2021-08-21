@@ -155,6 +155,8 @@ class AppRepository @Inject constructor(
         packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
     }
 
+    fun getAppLaunchingIntent(packageName: String) = packageManager.getLaunchIntentForPackage(packageName)
+
     private fun getStatusIntent(packageName: String): Intent {
         val statusIntent = Intent(context, SessionStatusReceiver::class.java)
         // For convenience & to ensure a unique intent per-package:

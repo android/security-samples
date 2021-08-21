@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
     private val TAG = MainActivity::class.java.simpleName
     private val viewModel: AppViewModel by viewModels()
     private var pendingInstallsJob: Job? = null
+    private var intentLaunchingJob: Job? = null
 
     @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,10 +53,15 @@ class MainActivity : ComponentActivity() {
         pendingInstallsJob = lifecycleScope.launch {
             viewModel.pendingInstallUserActionEvents.collect(::onPendingUserAction)
         }
+
+        intentLaunchingJob = lifecycleScope.launch {
+            viewModel.intentsToBeLaunched.collect(::startActivity)
+        }
     }
 
     override fun onPause() {
         pendingInstallsJob?.cancel()
+        intentLaunchingJob?.cancel()
         super.onPause()
     }
 

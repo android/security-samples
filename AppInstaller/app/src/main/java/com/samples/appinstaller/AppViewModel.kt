@@ -17,6 +17,7 @@
 package com.samples.appinstaller
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
@@ -29,6 +30,8 @@ import com.samples.appinstaller.store.AppPackage
 import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,6 +46,8 @@ class AppViewModel @Inject constructor(
     val settings: LiveData<AppSettings> = context.appSettings.data.asLiveData()
     val apps: StateFlow<List<AppPackage>> = repository.apps
     val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
+    private val _intentsToBeLaunched = MutableSharedFlow<Intent>()
+    val intentsToBeLaunched: SharedFlow<Intent> = _intentsToBeLaunched
 
     init {
         viewModelScope.launch {
@@ -68,5 +73,11 @@ class AppViewModel @Inject constructor(
 
     fun uninstallApp(app: AppPackage) {
         repository.uninstallApp(app.name)
+    }
+
+    fun openApp(appPackage: AppPackage) {
+        viewModelScope.launch {
+            repository.getAppLaunchingIntent(appPackage.name)?.let { _intentsToBeLaunched.emit(it) }
+        }
     }
 }
