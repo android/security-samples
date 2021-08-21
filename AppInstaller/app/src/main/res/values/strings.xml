@@ -17,6 +17,14 @@
 <resources>
     <string name="app_name">App Installer</string>
 
+    <!-- Permission screen -->
+    <string name="permission_description">To be able to use the store, we need to request the install permission to add apps to your device</string>
+    <string name="request_permission_label">Request Permission</string>
+    <string name="authorization_dialog_title">Authorization</string>
+    <string name="authorization_dialog_description">App Installer needs this special permission to be install other apps</string>
+    <string name="authorization_dialog_confirm_label">OK</string>
+    <string name="authorization_dialog_learn_more_label">Learn More</string>
+
     <!-- Settings screen -->
     <string name="auto_update_title">Auto-update Settings</string>
     <string name="autoupdate_settings_description">DemoStore will update (or not) automatically apps it has installed based on these settings</string>

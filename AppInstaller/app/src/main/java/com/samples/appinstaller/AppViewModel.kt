@@ -38,8 +38,7 @@ class AppViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: AppRepository
 ) : ViewModel() {
-    val isPermissionGranted: Boolean
-        get() = repository.canInstallPackages()
+    fun canInstallPackages() = repository.canInstallPackages()
 
     val settings: LiveData<AppSettings> = context.appSettings.data.asLiveData()
     val apps: StateFlow<List<AppPackage>> = repository.apps
