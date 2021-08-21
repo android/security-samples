@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2021 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +18,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.samples.appinstaller">
 
+    <!-- TODO: Review permission needs -->
     <!-- We use this permission to install apps -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission
         android:name="android.permission.INSTALL_PACKAGES"
         tools:ignore="ProtectedPermissions" />
+    <!-- We use this permission to update apps in the background -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <!-- We use this permission to uninstall apps -->
     <uses-permission
         android:name="android.permission.DELETE_PACKAGES"
@@ -57,6 +60,10 @@
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
+
+        <receiver
+            android:name=".SessionStatusReceiver"
+            android:exported="false" />
 
     </application>
 
