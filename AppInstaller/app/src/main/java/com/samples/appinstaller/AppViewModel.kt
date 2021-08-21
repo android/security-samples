@@ -50,6 +50,10 @@ class AppViewModel @Inject constructor(
     val intentsToBeLaunched: SharedFlow<Intent> = _intentsToBeLaunched
 
     init {
+        refreshLibrary()
+    }
+
+    fun refreshLibrary() {
         viewModelScope.launch {
             repository.loadLibrary()
         }

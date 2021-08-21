@@ -36,11 +36,14 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.ListItem
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,7 +77,16 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
     fun cancel(app: AppPackage) = viewModel.cancelInstall(app)
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = { viewModel.refreshLibrary() }) {
+                        Icon(Icons.Filled.Refresh, stringResource(R.string.refresh_library))
+                    }
+                }
+            )
+        },
         bottomBar = {
             BottomNavigation {
                 BottomNavigationItem(

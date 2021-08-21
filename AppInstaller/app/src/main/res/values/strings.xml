@@ -34,6 +34,7 @@
     <string name="uninstall_label">Uninstall</string>
     <string name="open_label">Open</string>
     <string name="upgrading_label">Upgrading</string>
+    <string name="refresh_library">Refresh library</string>
 
     <!-- Settings screen -->
     <string name="auto_update_title">Auto-update Settings</string>
