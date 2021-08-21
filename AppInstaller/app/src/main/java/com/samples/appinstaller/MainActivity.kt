@@ -16,7 +16,9 @@
 
 package com.samples.appinstaller
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -40,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -47,14 +50,20 @@ import com.samples.appinstaller.settings.SettingsScreen
 import com.samples.appinstaller.store.StoreScreen
 import com.samples.appinstaller.ui.theme.AppInstallerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val TAG = MainActivity::class.java.simpleName
     private val viewModel: AppViewModel by viewModels()
+    private var pendingInstallsJob: Job? = null
 
     @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             AppInstallerTheme {
                 Scaffold(
@@ -67,6 +76,23 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        pendingInstallsJob = lifecycleScope.launch {
+            viewModel.pendingInstallUserActionEvents.collect(::onPendingUserAction)
+        }
+    }
+
+    override fun onPause() {
+        pendingInstallsJob?.cancel()
+        super.onPause()
+    }
+
+    private fun onPendingUserAction(statusIntent: Intent) {
+        Log.d(TAG, "MainActivity onPendingUserAction")
+        startActivity(statusIntent.getParcelableExtra(Intent.EXTRA_INTENT))
     }
 }
 
