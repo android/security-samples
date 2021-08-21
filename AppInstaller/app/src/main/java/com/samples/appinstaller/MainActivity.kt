@@ -22,32 +22,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.samples.appinstaller.settings.SettingsScreen
-import com.samples.appinstaller.store.StoreScreen
 import com.samples.appinstaller.ui.theme.AppInstallerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
@@ -66,14 +42,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppInstallerTheme {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("App Installer") }
-                        )
-                    },
-                    content = { innerPadding -> AppContainer(viewModel, innerPadding) }
-                )
+                Router(viewModel)
             }
         }
     }
@@ -93,44 +62,5 @@ class MainActivity : ComponentActivity() {
     private fun onPendingUserAction(statusIntent: Intent) {
         Log.d(TAG, "MainActivity onPendingUserAction")
         startActivity(statusIntent.getParcelableExtra(Intent.EXTRA_INTENT))
-    }
-}
-
-sealed class NavigationItem(val route: String, val icon: ImageVector, val title: String) {
-    object Store : NavigationItem("store", Icons.Filled.Home, "Demo Store")
-    object Settings : NavigationItem("settings", Icons.Filled.Settings, "Settings")
-}
-
-@ExperimentalMaterialApi
-@Composable
-fun AppContainer(viewModel: AppViewModel, innerPadding: PaddingValues) {
-    val navController = rememberNavController()
-
-    val items = listOf(NavigationItem.Store, NavigationItem.Settings)
-    var selectedItem by remember { mutableStateOf(0) }
-
-    Column(modifier = Modifier.padding(innerPadding)) {
-        NavHost(
-            modifier = Modifier.weight(1f),
-            navController = navController,
-            startDestination = NavigationItem.Store.route
-        ) {
-            composable(NavigationItem.Store.route) { StoreScreen(viewModel) }
-            composable(NavigationItem.Settings.route) { SettingsScreen(viewModel) }
-        }
-
-        BottomNavigation {
-            items.forEachIndexed { index, item ->
-                BottomNavigationItem(
-                    icon = { Icon(item.icon, contentDescription = null) },
-                    label = { Text(item.title) },
-                    selected = selectedItem == index,
-                    onClick = {
-                        selectedItem = index
-                        navController.navigate(item.route)
-                    }
-                )
-            }
-        }
     }
 }

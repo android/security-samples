@@ -23,18 +23,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.ListItem
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,11 +49,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.samples.appinstaller.AppViewModel
+import com.samples.appinstaller.Route
 
 @ExperimentalMaterialApi
 @Composable
-fun StoreScreen(viewModel: AppViewModel) {
+fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
+    LaunchedEffect(viewModel.canInstallPackages()) {
+        if(!viewModel.canInstallPackages()) {
+            navController.navigate(Route.Permission.id)
+        }
+    }
+
     val apps by viewModel.apps.collectAsState()
 
     fun install(app: AppPackage) = viewModel.installApp(app)
@@ -55,11 +70,34 @@ fun StoreScreen(viewModel: AppViewModel) {
     fun open(app: AppPackage) = viewModel.installApp(app)
     fun cancel(app: AppPackage) = viewModel.cancelInstall(app)
 
-    LazyColumn {
-        items(apps) { app ->
-            AppItem(app, ::install, ::upgrade, ::uninstall, ::open, ::cancel)
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("App Installer") }) },
+        bottomBar = {
+            BottomNavigation {
+                BottomNavigationItem(
+                    icon = { Icon(Route.Store.icon, contentDescription = null) },
+                    label = { Text(Route.Store.title) },
+                    selected = true,
+                    onClick = {}
+                )
+                BottomNavigationItem(
+                    icon = { Icon(Route.Settings.icon, contentDescription = null) },
+                    label = { Text(Route.Settings.title) },
+                    selected = false,
+                    onClick = {
+                        navController.navigate(Route.Settings.id)
+                    }
+                )
+            }
+        },
+        content = { innerPadding ->
+            LazyColumn(Modifier.padding(innerPadding)) {
+                items(apps) { app ->
+                    AppItem(app, ::install, ::upgrade, ::uninstall, ::open, ::cancel)
+                }
+            }
         }
-    }
+    )
 }
 
 @ExperimentalMaterialApi

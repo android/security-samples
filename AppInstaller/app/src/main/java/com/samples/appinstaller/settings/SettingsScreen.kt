@@ -23,53 +23,94 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.ListItem
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.samples.appinstaller.AppViewModel
 import com.samples.appinstaller.R
+import com.samples.appinstaller.Route
 
 @ExperimentalMaterialApi
 @Composable
-fun SettingsScreen(viewModel: AppViewModel) {
-    Column(Modifier.padding(vertical = 16.dp)) {
-        Text(
-            text = stringResource(R.string.auto_update_title),
-            style = MaterialTheme.typography.h6,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.autoupdate_settings_description),
-            style = MaterialTheme.typography.body2,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        Spacer(Modifier.height(24.dp))
-        SettingItem(
-            stringResource(R.string.auto_update_schedule_label),
-            "Check and update every minute"
-        ) {}
-
-        Spacer(Modifier.height(16.dp))
-        SettingItem(
-            stringResource(R.string.update_availability_period_label),
-            "No updates"
-        ) {}
-
-        Spacer(Modifier.height(32.dp))
-        Button(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), onClick = { /*TODO*/ }) {
-            Text("Trigger auto-updating manually")
+fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
+    LaunchedEffect(viewModel.canInstallPackages()) {
+        if(!viewModel.canInstallPackages()) {
+            navController.navigate(Route.Permission.id)
         }
     }
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("App Installer") }) },
+        bottomBar = {
+            BottomNavigation {
+                BottomNavigationItem(
+                    icon = { Icon(Route.Store.icon, contentDescription = null) },
+                    label = { Text(Route.Store.title) },
+                    selected = false,
+                    onClick = {
+                        navController.navigate(Route.Store.id)
+                    }
+                )
+                BottomNavigationItem(
+                    icon = { Icon(Route.Settings.icon, contentDescription = null) },
+                    label = { Text(Route.Settings.title) },
+                    selected = true,
+                    onClick = {}
+                )
+            }
+        },
+        content = { innerPadding ->
+            Column(Modifier.padding(innerPadding).padding(vertical = 16.dp)) {
+                Text(
+                    text = stringResource(R.string.auto_update_title),
+                    style = MaterialTheme.typography.h6,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.autoupdate_settings_description),
+                    style = MaterialTheme.typography.body2,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(Modifier.height(24.dp))
+                SettingItem(
+                    stringResource(R.string.auto_update_schedule_label),
+                    "Check and update every minute"
+                ) {}
+
+                Spacer(Modifier.height(16.dp))
+                SettingItem(
+                    stringResource(R.string.update_availability_period_label),
+                    "No updates"
+                ) {}
+
+                Spacer(Modifier.height(32.dp))
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    onClick = { /*TODO*/ }) {
+                    Text("Trigger auto-updating manually")
+                }
+            }
+        }
+    )
 }
 
 @ExperimentalMaterialApi
