@@ -23,7 +23,6 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.samples.appinstaller.AppRepository
-import com.samples.appinstaller.SessionStatusReceiver
 import com.samples.appinstaller.store.AppPackage
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -63,8 +62,7 @@ class InstallWorker @AssistedInject constructor(
             delay(FAKE_DOWNLOADING_DELAY)
 
             Log.d(TAG, "Committing session for $packageName")
-            val pendingIntent =
-                SessionStatusReceiver.getStatusPendingIntent(applicationContext, packageName)
+            val pendingIntent = repository.getStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
         } catch (e: IOException) {
             e.printStackTrace()
