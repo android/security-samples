@@ -43,37 +43,7 @@ class AppViewModel @Inject constructor(
 
     val settings: LiveData<AppSettings> = context.appSettings.data.asLiveData()
     val apps: StateFlow<List<AppPackage>> = repository.apps
-
-//    init {
-//        viewModelScope.launch {
-//            repository.installEvents
-//                .collect { installEvent ->
-//                    _apps.value = _apps.value.map { app ->
-//                        if(app.name == installEvent.packageName) {
-//                            when(installEvent.type) {
-//                                AppRepository.InstallEventType.INSTALLING -> {
-//                                    app.copy(status = AppStatus.INSTALLING)
-//                                }
-//                                AppRepository.InstallEventType.INSTALL_SUCCESS -> {
-//                                    app.copy(status = AppStatus.INSTALLED)
-//                                }
-//                                AppRepository.InstallEventType.INSTALL_FAILURE -> {
-//                                    app.copy(status = AppStatus.UNINSTALLED)
-//                                }
-//                                AppRepository.InstallEventType.UNINSTALL_SUCCESS -> {
-//                                    app.copy(status = AppStatus.UNINSTALLED)
-//                                }
-//                                AppRepository.InstallEventType.UNINSTALL_FAILURE -> {
-//                                    app.copy(status = AppStatus.INSTALLED)
-//                                }
-//                            }
-//                        } else {
-//                            app
-//                        }
-//                    }
-//                }
-//        }
-//    }
+    val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
 
     /**
      * Install app by creating an install session and write the app's apk in it.
