@@ -49,9 +49,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.samples.appinstaller.AppViewModel
+import com.samples.appinstaller.R
 import com.samples.appinstaller.Route
 
 @ExperimentalMaterialApi
@@ -118,9 +120,9 @@ fun AppItem(
             Column {
                 if (app.updatedAt > -1) {
                     val installationPeriod = DateUtils.getRelativeTimeSpanString(app.updatedAt)
-                    Text("Installed $installationPeriod")
+                    Text(stringResource(R.string.install_time_label, installationPeriod))
                 } else {
-                    Text("Not installed")
+                    Text(stringResource(R.string.not_installed_label))
                 }
 
                 Spacer(Modifier.height(5.dp))
@@ -128,39 +130,39 @@ fun AppItem(
                     when (app.status) {
                         AppStatus.UNINSTALLED -> {
                             Button(modifier = Modifier.weight(1f), onClick = { onInstall(app) }) {
-                                Text("Install")
+                                Text(stringResource(R.string.install_label))
                             }
                         }
                         AppStatus.INSTALLING -> {
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), onClick = { onCancel(app) }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.cancel_label))
                             }
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), enabled = false, onClick = { }) {
-                                Text("Installing")
+                                Text(stringResource(R.string.installing_label))
                             }
                             Spacer(Modifier.width(5.dp))
                         }
                         AppStatus.INSTALLED -> {
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), onClick = { onUninstall(app) }) {
-                                Text("Uninstall")
+                                Text(stringResource(R.string.uninstall_label))
                             }
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), onClick = { onOpen(app) }) {
-                                Text("Open")
+                                Text(stringResource(R.string.open_label))
                             }
                             Spacer(Modifier.width(5.dp))
                         }
                         AppStatus.UPGRADING -> {
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), onClick = { onCancel(app) }) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.cancel_label))
                             }
                             Spacer(Modifier.width(5.dp))
                             Button(modifier = Modifier.weight(1f), enabled = false, onClick = { }) {
-                                Text("Upgrading")
+                                Text(stringResource(R.string.upgrading_label))
                             }
                             Spacer(Modifier.width(5.dp))
                         }

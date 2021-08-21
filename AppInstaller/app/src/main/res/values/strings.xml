@@ -25,6 +25,16 @@
     <string name="authorization_dialog_confirm_label">OK</string>
     <string name="authorization_dialog_learn_more_label">Learn More</string>
 
+    <!-- Store screen -->
+    <string name="install_time_label">Installed %1$s</string>
+    <string name="not_installed_label">Not installed</string>
+    <string name="install_label">Install</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="installing_label">Installing</string>
+    <string name="uninstall_label">Uninstall</string>
+    <string name="open_label">Open</string>
+    <string name="upgrading_label">Upgrading</string>
+
     <!-- Settings screen -->
     <string name="auto_update_title">Auto-update Settings</string>
     <string name="autoupdate_settings_description">DemoStore will update (or not) automatically apps it has installed based on these settings</string>
