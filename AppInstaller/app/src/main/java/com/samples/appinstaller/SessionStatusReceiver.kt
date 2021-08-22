@@ -28,14 +28,19 @@ private val TAG = SessionStatusReceiver::class.java.simpleName
 
 @AndroidEntryPoint
 class SessionStatusReceiver : BroadcastReceiver() {
+    companion object {
+        const val INSTALL_ACTION = "install_action"
+        const val UNINSTALL_ACTION = "uninstall_action"
+    }
+
     @Inject
     lateinit var repository: AppRepository
 
     override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action
         val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Int.MIN_VALUE)
         val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-        val userActionIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         val packageName = intent.data?.schemeSpecificPart ?: return
 
         Log.d(
@@ -49,7 +54,11 @@ class SessionStatusReceiver : BroadcastReceiver() {
                 repository.onPendingUserAction(packageName, intent)
             }
             PackageInstaller.STATUS_SUCCESS -> {
-                repository.onInstallSuccess(packageName)
+                when(action) {
+                    INSTALL_ACTION -> repository.onInstallSuccess(packageName)
+                    UNINSTALL_ACTION -> repository.onUninstallSuccess(packageName)
+                    else -> Log.e(TAG, "Unhandled status: $status")
+                }
             }
             PackageInstaller.STATUS_FAILURE,
             PackageInstaller.STATUS_FAILURE_ABORTED,
@@ -58,7 +67,11 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE_INCOMPATIBLE,
             PackageInstaller.STATUS_FAILURE_INVALID,
             PackageInstaller.STATUS_FAILURE_STORAGE -> {
-                repository.onInstallFailure(packageName)
+                when(action) {
+                    INSTALL_ACTION -> repository.onInstallFailure(packageName)
+                    UNINSTALL_ACTION -> repository.onInstallFailure(packageName)
+                    else -> Log.e(TAG, "Unhandled status: $status")
+                }
             }
             // TODO: Remove branch (too many logs) and add intent filter in manifest
             else -> Log.e(TAG, "Unhandled status: $status")

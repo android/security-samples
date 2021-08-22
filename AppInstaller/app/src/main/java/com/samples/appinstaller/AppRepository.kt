@@ -146,8 +146,9 @@ class AppRepository @Inject constructor(
     }
 
     fun uninstallApp(packageName: String) {
-        val statusIntent = Intent("UNINSTALL_INTENT_NAME").apply {
-            setPackage(context.packageName)
+        val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
+            action = SessionStatusReceiver.UNINSTALL_ACTION
+            data = Uri.fromParts("package", packageName, null)
         }
 
         val statusPendingIntent =
@@ -157,17 +158,19 @@ class AppRepository @Inject constructor(
 
     fun getAppLaunchingIntent(packageName: String) = packageManager.getLaunchIntentForPackage(packageName)
 
-    private fun getStatusIntent(packageName: String): Intent {
-        val statusIntent = Intent(context, SessionStatusReceiver::class.java)
-        // For convenience & to ensure a unique intent per-package:
-        statusIntent.data = Uri.fromParts("package", packageName, null)
-        statusIntent.flags = Intent.FLAG_RECEIVER_FOREGROUND
-        return statusIntent
+    private fun createStatusIntent(packageName: String): Intent {
+        return Intent(context, SessionStatusReceiver::class.java).apply {
+            action = SessionStatusReceiver.INSTALL_ACTION
+
+            // For convenience & to ensure a unique intent per-package:
+            data = Uri.fromParts("package", packageName, null)
+            flags = Intent.FLAG_RECEIVER_FOREGROUND
+        }
     }
 
     fun getStatusPendingIntent(packageName: String): PendingIntent {
         return getStatusPendingIntent(
-            getStatusIntent(packageName),
+            createStatusIntent(packageName),
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
@@ -223,6 +226,24 @@ class AppRepository @Inject constructor(
             } else {
                 app
             }
+        }
+    }
+
+    fun onUninstallSuccess(packageName: String) {
+        _apps.value = _apps.value.map { app ->
+            if (app.name == packageName)
+                app.copy(status = AppStatus.UNINSTALLED, updatedAt = -1)
+            else
+                app
+        }
+    }
+
+    fun onUninstallFailure(packageName: String) {
+        _apps.value = _apps.value.map { app ->
+            if (app.name == packageName)
+                app.copy(status = AppStatus.INSTALLED)
+            else
+                app
         }
     }
 }
