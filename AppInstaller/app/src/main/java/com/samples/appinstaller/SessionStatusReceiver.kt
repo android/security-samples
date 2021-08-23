@@ -54,7 +54,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
                 repository.onPendingUserAction(packageName, intent)
             }
             PackageInstaller.STATUS_SUCCESS -> {
-                when(action) {
+                when (action) {
                     INSTALL_ACTION -> repository.onInstallSuccess(packageName)
                     UNINSTALL_ACTION -> repository.onUninstallSuccess(packageName)
                     else -> Log.e(TAG, "Unhandled status: $status")
@@ -67,7 +67,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE_INCOMPATIBLE,
             PackageInstaller.STATUS_FAILURE_INVALID,
             PackageInstaller.STATUS_FAILURE_STORAGE -> {
-                when(action) {
+                when (action) {
                     INSTALL_ACTION -> repository.onInstallFailure(packageName)
                     UNINSTALL_ACTION -> repository.onInstallFailure(packageName)
                     else -> Log.e(TAG, "Unhandled status: $status")

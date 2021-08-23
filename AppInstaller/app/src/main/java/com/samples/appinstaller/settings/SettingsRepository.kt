@@ -17,7 +17,6 @@
 package com.samples.appinstaller.settings
 
 import android.content.Context
-import androidx.lifecycle.asLiveData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -48,7 +48,10 @@ subprojects {
         groovyGradle {
             target("**/*.gradle")
             greclipse().configFile(rootProject.file("spotless/greclipse.properties"))
-            licenseHeaderFile(project.rootProject.file("spotless/copyright.txt"), "(buildscript|apply|import|plugins)")
+            licenseHeaderFile(
+                project.rootProject.file("spotless/copyright.txt"),
+                "(buildscript|apply|import|plugins)"
+            )
         }
     }
 }
