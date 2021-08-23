@@ -22,10 +22,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.ListItem
@@ -35,9 +36,13 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -49,10 +54,12 @@ import com.samples.appinstaller.Route
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
     LaunchedEffect(viewModel.canInstallPackages()) {
-        if(!viewModel.canInstallPackages()) {
+        if (!viewModel.canInstallPackages()) {
             navController.navigate(Route.Permission.id)
         }
     }
+
+    val settings by viewModel.settings.collectAsState()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
@@ -78,7 +85,8 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
             Column(
                 Modifier
                     .padding(innerPadding)
-                    .padding(vertical = 16.dp)) {
+                    .padding(vertical = 16.dp)
+            ) {
                 Text(
                     text = stringResource(R.string.auto_update_title),
                     style = MaterialTheme.typography.h6,
@@ -94,14 +102,16 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
                 Spacer(Modifier.height(24.dp))
                 SettingItem(
                     stringResource(R.string.auto_update_schedule_label),
-                    "Check and update every minute"
-                ) {}
+                    stringArrayResource(R.array.auto_update_schedule)[settings.autoUpdateScheduleValue],
+                    stringArrayResource(R.array.auto_update_schedule)
+                ) { value -> viewModel.setAutoUpdateSchedule(value) }
 
                 Spacer(Modifier.height(16.dp))
                 SettingItem(
                     stringResource(R.string.update_availability_period_label),
-                    "No updates"
-                ) {}
+                    stringArrayResource(R.array.update_availability_period)[settings.updateAvailabilityPeriodValue],
+                    stringArrayResource(R.array.update_availability_period)
+                ) { value -> viewModel.setUpdateAvailabilityPeriod(value) }
 
                 Spacer(Modifier.height(32.dp))
                 Button(
@@ -118,9 +128,16 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
 
 @ExperimentalMaterialApi
 @Composable
-fun SettingItem(settingLabel: String, valueLabel: String, onClick: () -> Unit) {
+fun SettingItem(
+    settingLabel: String,
+    valueLabel: String,
+    items: Array<String>,
+    onClick: (value: Int) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clickable(onClick = { isExpanded = !isExpanded }),
         text = {
             Column {
                 Text(
@@ -132,27 +149,17 @@ fun SettingItem(settingLabel: String, valueLabel: String, onClick: () -> Unit) {
                     text = valueLabel,
                     style = MaterialTheme.typography.caption
                 )
+                DropdownMenu(
+                    expanded = isExpanded,
+                    onDismissRequest = { isExpanded = false }
+                ) {
+                    items.forEachIndexed { value, label ->
+                        DropdownMenuItem(onClick = { onClick(value); isExpanded = false }) {
+                            Text(label)
+                        }
+                    }
+                }
             }
         }
     )
-
-    val openDialog = remember { mutableStateOf(false) }
-
-    if (openDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                openDialog.value = false
-            },
-            title = {
-                Text(settingLabel)
-            },
-            text = {
-                Text(
-                    "This area typically contains the supportive text " +
-                            "which presents the details regarding the Dialog's purpose."
-                )
-            },
-            buttons = {}
-        )
-    }
 }

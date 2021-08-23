@@ -24,19 +24,25 @@ import com.samples.appinstaller.store.AppPackage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
     private val repository: AppRepository,
-    settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     fun canInstallPackages() = repository.canInstallPackages()
 
-    val settings = settingsRepository.data
     val apps = repository.apps
     val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
+    val settings = settingsRepository.settings.data.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily,
+        AppSettings.getDefaultInstance()
+    )
 
     private val _intentsToBeLaunched = MutableSharedFlow<Intent>()
     val intentsToBeLaunched: SharedFlow<Intent> = _intentsToBeLaunched
@@ -48,6 +54,18 @@ class AppViewModel @Inject constructor(
     fun refreshLibrary() {
         viewModelScope.launch {
             repository.loadLibrary()
+        }
+    }
+
+    fun setAutoUpdateSchedule(value: Int) {
+        viewModelScope.launch {
+            settingsRepository.setAutoUpdateSchedule(value)
+        }
+    }
+
+    fun setUpdateAvailabilityPeriod(value: Int) {
+        viewModelScope.launch {
+            settingsRepository.setUpdateAvailabilityPeriod(value)
         }
     }
 

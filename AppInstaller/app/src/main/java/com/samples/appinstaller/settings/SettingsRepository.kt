@@ -26,7 +26,7 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val data = context.appSettings.data.asLiveData()
+    val settings = context.appSettings
 
     suspend fun setAutoUpdateSchedule(value: Int) {
         context.appSettings.updateData { currentSettings ->
