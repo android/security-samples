@@ -32,7 +32,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.samples.appinstaller.store.AppPackage
 import com.samples.appinstaller.store.AppStatus
-import com.samples.appinstaller.store.SampleApps
+import com.samples.appinstaller.store.StoreRepository
 import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +58,7 @@ class AppRepository @Inject constructor(
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
 
-    private val _apps = MutableStateFlow(SampleApps)
+    private val _apps = MutableStateFlow(StoreRepository.apps)
     val apps: StateFlow<List<AppPackage>> = _apps
 
     fun getAppByName(name: String): AppPackage? {
@@ -75,7 +75,7 @@ class AppRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             val installedPackages = packageManager.getInstalledPackages(0)
 
-            _apps.value = SampleApps
+            _apps.value = StoreRepository.apps
                 .map { app ->
                     val installedPackage = installedPackages.find { it.packageName == app.name }
 
