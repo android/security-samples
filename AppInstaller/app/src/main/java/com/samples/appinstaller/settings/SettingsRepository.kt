@@ -27,4 +27,18 @@ class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     val data = context.appSettings.data.asLiveData()
+
+    suspend fun setAutoUpdateSchedule(value: Int) {
+        context.appSettings.updateData { currentSettings ->
+            currentSettings.toBuilder().setAutoUpdateScheduleValue(value).build()
+        }
+    }
+
+    suspend fun setUpdateAvailabilityPeriod(value: Int) {
+        context.appSettings.updateData { currentSettings ->
+            currentSettings.toBuilder()
+                .setUpdateAvailabilityPeriodValue(value)
+                .build()
+        }
+    }
 }
