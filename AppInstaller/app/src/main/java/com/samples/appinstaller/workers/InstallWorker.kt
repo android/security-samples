@@ -62,7 +62,7 @@ class InstallWorker @AssistedInject constructor(
             delay(FAKE_DOWNLOADING_DELAY)
 
             Log.d(TAG, "Committing session for $packageName")
-            val pendingIntent = repository.getStatusPendingIntent(packageName)
+            val pendingIntent = repository.createStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
         } catch (e: IOException) {
             e.printStackTrace()

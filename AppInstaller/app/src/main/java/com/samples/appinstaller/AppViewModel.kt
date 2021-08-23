@@ -38,8 +38,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    settingsRepository: SettingsRepository
 ) : ViewModel() {
     fun canInstallPackages() = repository.canInstallPackages()
 
@@ -60,18 +60,12 @@ class AppViewModel @Inject constructor(
     }
 
     fun installApp(app: AppPackage) {
-        val installWorkRequest = OneTimeWorkRequestBuilder<InstallWorker>()
-            .addTag(app.name)
-            .setInputData(workDataOf(InstallWorker.PACKAGE_NAME_KEY to app.name))
-            .build()
-
-        WorkManager.getInstance(context).enqueue(installWorkRequest)
+        repository.installApp(app.name)
     }
 
     fun cancelInstall(app: AppPackage) {
-        WorkManager.getInstance(context).cancelAllWorkByTag(app.name)
         viewModelScope.launch {
-            repository.abandonInstallSessions(app.name)
+            repository.cancelInstall(app.name)
         }
     }
 

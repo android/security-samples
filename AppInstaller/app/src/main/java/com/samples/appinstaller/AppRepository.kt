@@ -27,9 +27,13 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.os.BuildCompat
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.samples.appinstaller.store.AppPackage
 import com.samples.appinstaller.store.AppStatus
 import com.samples.appinstaller.store.SampleApps
+import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -59,6 +63,12 @@ class AppRepository @Inject constructor(
 
     fun getAppByName(name: String): AppPackage? {
         return apps.value.find { app -> app.name == name }
+    }
+
+    fun updateAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
+        _apps.value = _apps.value.map { app ->
+            if (app.name == packageName) transform(app) else app
+        }
     }
 
     suspend fun loadLibrary() {
@@ -105,6 +115,35 @@ class AppRepository @Inject constructor(
         }
     }
 
+    fun getAppLaunchingIntent(packageName: String) =
+        packageManager.getLaunchIntentForPackage(packageName)
+
+    fun uninstallApp(packageName: String) {
+        val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
+            action = SessionStatusReceiver.UNINSTALL_ACTION
+            data = Uri.fromParts("package", packageName, null)
+        }
+
+        val statusPendingIntent =
+            PendingIntent.getBroadcast(context, 0, statusIntent, PendingIntent.FLAG_MUTABLE)
+        packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
+    }
+
+    suspend fun cancelInstall(packageName: String) {
+        WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
+        abandonInstallSessions(packageName)
+        appsBeingInstalled.remove(packageName)
+    }
+
+    fun installApp(packageName: String) {
+        val installWorkRequest = OneTimeWorkRequestBuilder<InstallWorker>()
+            .addTag(packageName)
+            .setInputData(workDataOf(InstallWorker.PACKAGE_NAME_KEY to packageName))
+            .build()
+
+        WorkManager.getInstance(context).enqueue(installWorkRequest)
+    }
+
     fun createInstallSession(packageName: String): PackageInstaller.Session? {
         val params = SessionParams(SessionParams.MODE_FULL_INSTALL)
             .apply {
@@ -145,19 +184,6 @@ class AppRepository @Inject constructor(
         }
     }
 
-    fun uninstallApp(packageName: String) {
-        val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
-            action = SessionStatusReceiver.UNINSTALL_ACTION
-            data = Uri.fromParts("package", packageName, null)
-        }
-
-        val statusPendingIntent =
-            PendingIntent.getBroadcast(context, 0, statusIntent, PendingIntent.FLAG_MUTABLE)
-        packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
-    }
-
-    fun getAppLaunchingIntent(packageName: String) = packageManager.getLaunchIntentForPackage(packageName)
-
     private fun createStatusIntent(packageName: String): Intent {
         return Intent(context, SessionStatusReceiver::class.java).apply {
             action = SessionStatusReceiver.INSTALL_ACTION
@@ -168,18 +194,22 @@ class AppRepository @Inject constructor(
         }
     }
 
-    fun getStatusPendingIntent(packageName: String): PendingIntent {
-        return getStatusPendingIntent(
+    fun createStatusPendingIntent(packageName: String): PendingIntent {
+        return PendingIntent.getBroadcast(
+            context,
+            0,
             createStatusIntent(packageName),
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
 
-    private fun getStatusPendingIntent(
-        intent: Intent,
-        flags: Int
-    ): PendingIntent {
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE or flags)
+    private fun updateStatusPendingIntent(intent: Intent): PendingIntent {
+        return PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_NO_CREATE
+        )
     }
 
     private fun cacheStatusPendingIntent(statusIntent: Intent) {
@@ -189,10 +219,7 @@ class AppRepository @Inject constructor(
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS)
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
 
-        getStatusPendingIntent(
-            statusIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_NO_CREATE
-        )
+        updateStatusPendingIntent(statusIntent)
     }
 
     fun onPendingUserAction(packageName: String, statusIntent: Intent) {
@@ -204,46 +231,29 @@ class AppRepository @Inject constructor(
 
     fun onInstalling(packageName: String) {
         appsBeingInstalled.add(packageName)
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName) app.copy(status = AppStatus.INSTALLING) else app
-        }
+        updateAppState(packageName) { it.copy(status = AppStatus.INSTALLING) }
     }
 
     fun onInstallSuccess(packageName: String) {
         appsBeingInstalled.remove(packageName)
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName) {
-                app.copy(status = AppStatus.INSTALLED, updatedAt = System.currentTimeMillis())
-            } else app
+        updateAppState(packageName) {
+            it.copy(
+                status = AppStatus.INSTALLED,
+                updatedAt = System.currentTimeMillis()
+            )
         }
     }
 
     fun onInstallFailure(packageName: String) {
         appsBeingInstalled.remove(packageName)
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName) {
-                app.copy(status = if (app.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
-            } else {
-                app
-            }
-        }
+        updateAppState(packageName) { it.copy(status = if (it.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED) }
     }
 
     fun onUninstallSuccess(packageName: String) {
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName)
-                app.copy(status = AppStatus.UNINSTALLED, updatedAt = -1)
-            else
-                app
-        }
+        updateAppState(packageName) { it.copy(status = AppStatus.UNINSTALLED, updatedAt = -1) }
     }
 
     fun onUninstallFailure(packageName: String) {
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName)
-                app.copy(status = AppStatus.INSTALLED)
-            else
-                app
-        }
+        updateAppState(packageName) { it.copy(status = AppStatus.INSTALLED) }
     }
 }
