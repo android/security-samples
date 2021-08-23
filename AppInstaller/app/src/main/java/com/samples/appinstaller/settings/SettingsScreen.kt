@@ -136,7 +136,7 @@ fun SettingItem(settingLabel: String, valueLabel: String, onClick: () -> Unit) {
         }
     )
 
-    val openDialog = remember { mutableStateOf(true) }
+    val openDialog = remember { mutableStateOf(false) }
 
     if (openDialog.value) {
         AlertDialog(

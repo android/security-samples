@@ -16,23 +16,14 @@
 
 package com.samples.appinstaller
 
-import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import com.samples.appinstaller.settings.appSettings
+import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.AppPackage
-import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,9 +34,10 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
     fun canInstallPackages() = repository.canInstallPackages()
 
-    val settings: LiveData<AppSettings> = context.appSettings.data.asLiveData()
-    val apps: StateFlow<List<AppPackage>> = repository.apps
+    val settings = settingsRepository.data
+    val apps = repository.apps
     val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
+
     private val _intentsToBeLaunched = MutableSharedFlow<Intent>()
     val intentsToBeLaunched: SharedFlow<Intent> = _intentsToBeLaunched
 
