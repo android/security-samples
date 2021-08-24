@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.compose.icons)
     implementation(libs.lifecycle.runtimeKtx)
     implementation(libs.lifecycle.livedataKtx)
+    implementation(libs.lifecycle.process)
     implementation(libs.navigation.compose)
 
     implementation(libs.protobuf.javalite)

@@ -37,7 +37,7 @@ class AppViewModel @Inject constructor(
     fun canInstallPackages() = repository.canInstallPackages()
 
     val apps = repository.apps
-    val pendingInstallUserActionEvents = repository.pendingInstallUserActionEvents
+    val pendingInstallUserActionEvents = repository.pendingUserActionEvents
     val settings = settingsRepository.settings.data.stateIn(
         viewModelScope,
         SharingStarted.Lazily,
@@ -68,6 +68,8 @@ class AppViewModel @Inject constructor(
             settingsRepository.setUpdateAvailabilityPeriod(value)
         }
     }
+
+    fun notifyPendingInstalls() = repository.notifyPendingInstalls()
 
     fun installApp(app: AppPackage) {
         repository.installApp(app.name)

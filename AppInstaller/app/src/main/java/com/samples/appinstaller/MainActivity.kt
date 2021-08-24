@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         pendingInstallsJob?.cancel()
         intentLaunchingJob?.cancel()
+        viewModel.notifyPendingInstalls()
         super.onPause()
     }
 

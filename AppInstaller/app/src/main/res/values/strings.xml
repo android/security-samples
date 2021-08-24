@@ -36,6 +36,11 @@
     <string name="upgrading_label">Upgrading</string>
     <string name="refresh_library">Refresh library</string>
 
+    <!-- Notifications -->
+    <string name="install_channel_name">Installs &amp; updates</string>
+    <string name="install_notification_title">Finish installing apps</string>
+    <string name="install_notification_description">Tap to continue</string>
+
     <!-- Settings screen -->
     <string name="auto_update_title">Auto-update Settings</string>
     <string name="autoupdate_settings_description">DemoStore will update (or not) automatically apps it has installed based on these settings</string>

@@ -27,6 +27,8 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.os.BuildCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -39,16 +41,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AppRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val notificationRepository: NotificationRepository
 ) {
     private val TAG = this.javaClass.simpleName
 
@@ -65,7 +70,7 @@ class AppRepository @Inject constructor(
         return apps.value.find { app -> app.name == name }
     }
 
-    fun updateAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
+    private fun updateAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
         _apps.value = _apps.value.map { app ->
             if (app.name == packageName) transform(app) else app
         }
@@ -105,7 +110,9 @@ class AppRepository @Inject constructor(
     }
 
     private val appsBeingInstalled = mutableSetOf<String>()
-    val pendingInstallUserActionEvents = MutableSharedFlow<Intent>()
+    private val pendingUserActions: Queue<Intent> = LinkedList()
+    private val _pendingUserActionEvents = MutableSharedFlow<Intent>()
+    val pendingUserActionEvents : SharedFlow<Intent> = _pendingUserActionEvents
 
     fun canInstallPackages(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -130,9 +137,12 @@ class AppRepository @Inject constructor(
     }
 
     suspend fun cancelInstall(packageName: String) {
+        appsBeingInstalled.remove(packageName)
+        updateAppState(packageName) {
+            it.copy(status = if (it.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
+        }
         WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
         abandonInstallSessions(packageName)
-        appsBeingInstalled.remove(packageName)
     }
 
     fun installApp(packageName: String) {
@@ -223,13 +233,28 @@ class AppRepository @Inject constructor(
     }
 
     fun onPendingUserAction(packageName: String, statusIntent: Intent) {
+        appsBeingInstalled.add(packageName)
+        pendingUserActions.add(statusIntent)
+        updateAppState(packageName) { it.copy(status = if (it.updatedAt > -1) AppStatus.UPGRADING else AppStatus.INSTALLING) }
         cacheStatusPendingIntent(statusIntent)
+
         GlobalScope.launch {
-            pendingInstallUserActionEvents.emit(statusIntent)
+            _pendingUserActionEvents.emit(statusIntent)
+        }
+
+        if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            notifyPendingInstalls()
         }
     }
 
-    fun onInstalling(packageName: String) {
+    fun notifyPendingInstalls() {
+        println("pendingUserActions: ${pendingUserActions.size}")
+        if (pendingUserActions.size > 0) {
+            notificationRepository.createInstallNotification()
+        }
+    }
+
+    private fun onInstalling(packageName: String) {
         appsBeingInstalled.add(packageName)
         updateAppState(packageName) { it.copy(status = AppStatus.INSTALLING) }
     }
