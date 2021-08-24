@@ -32,6 +32,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
         const val INSTALL_ACTION = "install_action"
         const val UNINSTALL_ACTION = "uninstall_action"
         const val REDELIVER_ACTION = "redeliver_action"
+        const val EXTRA_REDELIVER = "is_redelivered"
     }
 
     @Inject
@@ -43,6 +44,11 @@ class SessionStatusReceiver : BroadcastReceiver() {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Int.MIN_VALUE)
         val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
         val packageName = intent.data?.schemeSpecificPart ?: return
+        val isRedelivered = intent.getBooleanExtra(EXTRA_REDELIVER, false)
+
+        if(isRedelivered) {
+            return repository.onInstallPendingUserAction(packageName, intent)
+        }
 
         Log.d(
             TAG,
@@ -52,7 +58,11 @@ class SessionStatusReceiver : BroadcastReceiver() {
 
         when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                repository.onPendingUserAction(packageName, intent)
+                when (action) {
+                    INSTALL_ACTION -> repository.onInstallPendingUserAction(packageName, intent)
+                    UNINSTALL_ACTION -> repository.onUninstallPendingUserAction(packageName, intent)
+                    else -> Log.e(TAG, "Unhandled status: $status")
+                }
             }
             PackageInstaller.STATUS_SUCCESS -> {
                 when (action) {

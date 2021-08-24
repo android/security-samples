@@ -30,7 +30,6 @@ import android.util.Log
 import androidx.core.os.BuildCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.room.Room
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -64,10 +63,6 @@ class AppRepository @Inject constructor(
 
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
-
-    private val db = Room.databaseBuilder(
-        context, AppDatabase::class.java, "app-installer"
-    ).build()
 
     private val _apps = MutableStateFlow(StoreRepository.apps)
     val apps: StateFlow<List<AppPackage>> = _apps
@@ -118,7 +113,7 @@ class AppRepository @Inject constructor(
     private val appsBeingInstalled = mutableSetOf<String>()
     private val pendingUserActions: Queue<Intent> = LinkedList()
     private val _pendingUserActionEvents = MutableSharedFlow<Intent>()
-    val pendingUserActionEvents : SharedFlow<Intent> = _pendingUserActionEvents
+    val pendingUserActionEvents: SharedFlow<Intent> = _pendingUserActionEvents
 
     fun canInstallPackages(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -243,6 +238,7 @@ class AppRepository @Inject constructor(
         // Don't save these extras which we want to receive future changes to.
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS)
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+        statusIntent.putExtra(SessionStatusReceiver.EXTRA_REDELIVER, true)
 
         updateStatusPendingIntent(statusIntent)
     }
@@ -251,32 +247,49 @@ class AppRepository @Inject constructor(
         return pendingUserActions.peek()
     }
 
-    suspend fun redeliverPendingUserAction() {
-        db.installDao().getOldestPendingUserAction()?.let { pendingUserAction ->
-            val packageName = pendingUserAction.packageName
-
-            getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
-                try {
-                    pendingIntent.send(context, 0, Intent(SessionStatusReceiver.REDELIVER_ACTION))
-                    Log.d(TAG, "Redelivered status intent for $packageName")
-                } catch (ignored: CanceledException) { }
-            }
+    suspend fun redeliverPendingUserActions() {
+        withContext(Dispatchers.IO) {
+            packageInstaller.mySessions
+                .filter {
+                    val packageName = it.appPackageName ?: return@filter false
+                    getAppByName(packageName) != null
+                }
+                .map { it.appPackageName!! }
+                .distinct()
+                .forEach { packageName ->
+                    getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
+                        try {
+                            pendingIntent.send(
+                                context,
+                                0,
+                                Intent(SessionStatusReceiver.REDELIVER_ACTION)
+                            )
+                            Log.d(TAG, "Redelivered status intent for $packageName")
+                        } catch (ignored: CanceledException) {
+                        }
+                    }
+                }
         }
     }
 
-    fun onPendingUserAction(packageName: String, statusIntent: Intent) {
+    fun onInstallPendingUserAction(packageName: String, statusIntent: Intent) {
         appsBeingInstalled.add(packageName)
         pendingUserActions.add(statusIntent)
         updateAppState(packageName) { it.copy(status = if (it.updatedAt > -1) AppStatus.UPGRADING else AppStatus.INSTALLING) }
         cacheStatusPendingIntent(statusIntent)
 
         GlobalScope.launch {
-            db.installDao().addPendingUserAction(PendingUserAction(packageName))
             _pendingUserActionEvents.emit(statusIntent)
         }
 
         if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
             notifyPendingInstalls()
+        }
+    }
+
+    fun onUninstallPendingUserAction(packageName: String, statusIntent: Intent) {
+        GlobalScope.launch {
+            _pendingUserActionEvents.emit(statusIntent)
         }
     }
 

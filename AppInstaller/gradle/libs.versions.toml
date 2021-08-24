@@ -39,9 +39,6 @@ hilt-androidCompiler = { module = "com.google.dagger:hilt-android-compiler", ver
 hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt" }
 hilt-workCompiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt" }
 workmanager-runtimeKtx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 androidxTest-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }
