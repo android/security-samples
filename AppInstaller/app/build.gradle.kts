@@ -95,6 +95,10 @@ dependencies {
     implementation(libs.hilt.work)
     kapt(libs.hilt.workCompiler)
 
+    implementation(libs.room.runtime)
+    kapt(libs.room.compiler)
+    implementation(libs.room.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTest.junit)
     androidTestImplementation(libs.espresso.core)
