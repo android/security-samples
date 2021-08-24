@@ -31,6 +31,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
     companion object {
         const val INSTALL_ACTION = "install_action"
         const val UNINSTALL_ACTION = "uninstall_action"
+        const val REDELIVER_ACTION = "redeliver_action"
     }
 
     @Inject

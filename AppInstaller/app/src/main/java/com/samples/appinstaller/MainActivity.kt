@@ -48,8 +48,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.redeliverPendingUserAction()
+    }
+
     override fun onResume() {
         super.onResume()
+        viewModel.getPendingUserAction()?.let(::startActivity)
+
         pendingInstallsJob = lifecycleScope.launch {
             viewModel.pendingInstallUserActionEvents.collect(::onPendingUserAction)
         }

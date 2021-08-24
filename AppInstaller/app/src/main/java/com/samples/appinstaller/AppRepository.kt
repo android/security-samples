@@ -17,6 +17,7 @@
 package com.samples.appinstaller
 
 import android.app.PendingIntent
+import android.app.PendingIntent.CanceledException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
@@ -29,6 +30,7 @@ import android.util.Log
 import androidx.core.os.BuildCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.room.Room
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -62,6 +64,10 @@ class AppRepository @Inject constructor(
 
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
+
+    private val db = Room.databaseBuilder(
+        context, AppDatabase::class.java, "app-installer"
+    ).build()
 
     private val _apps = MutableStateFlow(StoreRepository.apps)
     val apps: StateFlow<List<AppPackage>> = _apps
@@ -181,7 +187,7 @@ class AppRepository @Inject constructor(
         }
     }
 
-    suspend fun abandonInstallSessions(packageName: String) {
+    private suspend fun abandonInstallSessions(packageName: String) {
         withContext(Dispatchers.IO) {
             packageInstaller.allSessions
                 .filter { session -> session.appPackageName == packageName }
@@ -222,6 +228,15 @@ class AppRepository @Inject constructor(
         )
     }
 
+    private fun getCachedStatusPendingIntent(packageName: String): PendingIntent? {
+        return PendingIntent.getBroadcast(
+            context,
+            0,
+            createStatusIntent(packageName),
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+    }
+
     private fun cacheStatusPendingIntent(statusIntent: Intent) {
         val packageName = statusIntent.data!!.schemeSpecificPart
         Log.d(TAG, "Caching status intent for $packageName")
@@ -232,6 +247,23 @@ class AppRepository @Inject constructor(
         updateStatusPendingIntent(statusIntent)
     }
 
+    fun getPendingUserAction(): Intent? {
+        return pendingUserActions.peek()
+    }
+
+    suspend fun redeliverPendingUserAction() {
+        db.installDao().getOldestPendingUserAction()?.let { pendingUserAction ->
+            val packageName = pendingUserAction.packageName
+
+            getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
+                try {
+                    pendingIntent.send(context, 0, Intent(SessionStatusReceiver.REDELIVER_ACTION))
+                    Log.d(TAG, "Redelivered status intent for $packageName")
+                } catch (ignored: CanceledException) { }
+            }
+        }
+    }
+
     fun onPendingUserAction(packageName: String, statusIntent: Intent) {
         appsBeingInstalled.add(packageName)
         pendingUserActions.add(statusIntent)
@@ -239,6 +271,7 @@ class AppRepository @Inject constructor(
         cacheStatusPendingIntent(statusIntent)
 
         GlobalScope.launch {
+            db.installDao().addPendingUserAction(PendingUserAction(packageName))
             _pendingUserActionEvents.emit(statusIntent)
         }
 

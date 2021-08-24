@@ -71,6 +71,11 @@ class AppViewModel @Inject constructor(
 
     fun notifyPendingInstalls() = repository.notifyPendingInstalls()
 
+    fun getPendingUserAction() = repository.getPendingUserAction()
+    fun redeliverPendingUserAction() = viewModelScope.launch {
+        repository.redeliverPendingUserAction()
+    }
+
     fun installApp(app: AppPackage) {
         repository.installApp(app.name)
     }
