@@ -18,7 +18,6 @@ package com.samples.appinstaller.workers
 
 import android.content.Context
 import android.content.pm.PackageInstaller
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -30,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import logcat.logcat
 import java.io.IOException
 
 @HiltWorker
@@ -44,7 +44,6 @@ class InstallWorker @AssistedInject constructor(
         const val FAKE_DOWNLOADING_DELAY = 3000L
     }
 
-    private val TAG = this.javaClass.simpleName
     private lateinit var app: AppPackage
 
     override suspend fun doWork(): Result = coroutineScope {
@@ -53,15 +52,25 @@ class InstallWorker @AssistedInject constructor(
         app = repository.getAppByName(packageName) ?: return@coroutineScope Result.failure()
 
         try {
-            Log.d(TAG, "Installing: ${app.name}")
+            logcat { "Installing: ${app.name}" }
+            // We ask PackageInstaller to create an install sesssion
             val session =
                 repository.createInstallSession(app.name) ?: return@coroutineScope Result.failure()
-            writeApkToSession(session)
 
-            Log.d(TAG, "Sleeping to simulate download latency")
+            // We simulate a delay as installers would probably download first the APK from a remote
+            // server and write the APK bytes in the system afterwards
+            logcat { "Sleeping to simulate download latency" }
             delay(FAKE_DOWNLOADING_DELAY)
 
-            Log.d(TAG, "Committing session for $packageName")
+            // We copy our apk bytes to the install session OutputStream opened via PackageInstaller
+            writeApkToSession(session)
+
+            /**
+             * We commit our session to finalize it and give it a pending intent that will be send
+             * back to our app via [com.samples.appinstaller.SessionStatusReceiver] after the
+             * session has been processed
+             */
+            logcat { "Committing session for $packageName" }
             val pendingIntent = repository.createStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
         } catch (e: IOException) {
@@ -79,9 +88,11 @@ class InstallWorker @AssistedInject constructor(
      * Save APK in the provided session
      */
     private suspend fun writeApkToSession(session: PackageInstaller.Session) {
-        Log.d(TAG, "Writing APK to session...")
-
         withContext(Dispatchers.IO) {
+            // We open the apk from our assets folder and save it to the OutputStream provided by
+            // PackageInstaller to install that app
+            logcat { "Writing APK (${app.name}) to session (${session.parentSessionId})..." }
+
             session.openWrite("package", 0, -1).use { destination ->
                 applicationContext.assets.open("${app.name}.apk").copyTo(destination)
             }
