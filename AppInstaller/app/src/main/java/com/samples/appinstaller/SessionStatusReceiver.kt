@@ -20,11 +20,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
-import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
+import logcat.LogPriority
+import logcat.logcat
 import javax.inject.Inject
-
-private val TAG = SessionStatusReceiver::class.java.simpleName
 
 @AndroidEntryPoint
 class SessionStatusReceiver : BroadcastReceiver() {
@@ -46,31 +45,46 @@ class SessionStatusReceiver : BroadcastReceiver() {
         val packageName = intent.data?.schemeSpecificPart ?: return
         val isRedelivered = intent.getBooleanExtra(EXTRA_REDELIVER, false)
 
-        if(isRedelivered) {
+        /**
+         * Redelivered intents are cached intents that the user hasn't interacted yet with
+         */
+        if (isRedelivered) {
             return repository.onInstallPendingUserAction(packageName, intent)
         }
 
-        Log.d(
-            TAG,
-            "Received sessionId=$sessionId, packageName=$packageName, "
-                    + "status=${statusToString(status)}, message=$message"
-        )
+        logcat {
+            """
+               Received sessionId=$sessionId, 
+               packageName=$packageName, 
+               status=${statusToString(status)}, 
+               message=$message"
+            """.trimIndent()
+        }
 
         when (status) {
+            /**
+             * When the system requires a user action to confirm or cancel an action
+             */
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 when (action) {
                     INSTALL_ACTION -> repository.onInstallPendingUserAction(packageName, intent)
                     UNINSTALL_ACTION -> repository.onUninstallPendingUserAction(packageName, intent)
-                    else -> Log.e(TAG, "Unhandled status: $status")
+                    else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }
+            /**
+             * When the system successfully install or uninstall a package
+             */
             PackageInstaller.STATUS_SUCCESS -> {
                 when (action) {
                     INSTALL_ACTION -> repository.onInstallSuccess(packageName)
                     UNINSTALL_ACTION -> repository.onUninstallSuccess(packageName)
-                    else -> Log.e(TAG, "Unhandled status: $status")
+                    else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }
+            /**
+             * When the system fails to install or uninstall a package
+             */
             PackageInstaller.STATUS_FAILURE,
             PackageInstaller.STATUS_FAILURE_ABORTED,
             PackageInstaller.STATUS_FAILURE_BLOCKED,
@@ -81,11 +95,11 @@ class SessionStatusReceiver : BroadcastReceiver() {
                 when (action) {
                     INSTALL_ACTION -> repository.onInstallFailure(packageName)
                     UNINSTALL_ACTION -> repository.onInstallFailure(packageName)
-                    else -> Log.e(TAG, "Unhandled status: $status")
+                    else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }
             // TODO: Remove branch (too many logs) and add intent filter in manifest
-            else -> Log.e(TAG, "Unhandled status: $status")
+            else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
         }
     }
 

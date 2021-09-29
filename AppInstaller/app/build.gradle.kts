@@ -95,6 +95,8 @@ dependencies {
     implementation(libs.hilt.work)
     kapt(libs.hilt.workCompiler)
 
+    implementation(libs.logcat)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxTest.junit)
     androidTestImplementation(libs.espresso.core)
