@@ -31,6 +31,7 @@
     <string name="install_label">Install</string>
     <string name="cancel_label">Cancel</string>
     <string name="installing_label">Installing</string>
+    <string name="uninstalling_label">Uninstalling</string>
     <string name="uninstall_label">Uninstall</string>
     <string name="open_label">Open</string>
     <string name="upgrading_label">Upgrading</string>

@@ -136,6 +136,17 @@ fun AppItem(
                 Spacer(Modifier.height(5.dp))
                 Row(Modifier.fillMaxWidth()) {
                     when (app.status) {
+                        AppStatus.UNINSTALLING -> {
+                            Spacer(Modifier.width(5.dp))
+                            Button(modifier = Modifier.weight(1f), enabled = false, onClick = { /*TODO*/ }) {
+                                Text(stringResource(R.string.cancel_label))
+                            }
+                            Spacer(Modifier.width(5.dp))
+                            Button(modifier = Modifier.weight(1f), enabled = false, onClick = { }) {
+                                Text(stringResource(R.string.uninstalling_label))
+                            }
+                            Spacer(Modifier.width(5.dp))
+                        }
                         AppStatus.UNINSTALLED -> {
                             Button(modifier = Modifier.weight(1f), onClick = { onInstall(app) }) {
                                 Text(stringResource(R.string.install_label))
