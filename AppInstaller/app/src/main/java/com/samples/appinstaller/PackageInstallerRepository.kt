@@ -299,8 +299,10 @@ class PackageInstallerRepository @Inject constructor(
                     val packageName = sessionInfo.appPackageName ?: return@filter false
                     library.containsApp(packageName)
                 }
-                .distinctBy { it.appPackageName }
-                .mapNotNull { it.appPackageName }
+                .sortedByDescending { sessionInfo -> sessionInfo.createdMillis }
+                .distinctBy { sessionInfo -> sessionInfo.appPackageName }
+                .mapNotNull { sessionInfo -> sessionInfo.appPackageName }
+                .also { sessions -> logcat { "Redeliver pending user actions (${sessions.size} unique sessions found)" } }
                 .forEach { packageName ->
                     getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
                         try {
@@ -312,6 +314,7 @@ class PackageInstallerRepository @Inject constructor(
 
                             logcat { "Redelivered status intent for $packageName" }
                         } catch (ignored: CanceledException) {
+                            logcat(LogPriority.ERROR) { ignored.asLog() }
                         }
                     }
                 }
@@ -353,6 +356,15 @@ class PackageInstallerRepository @Inject constructor(
         logcat { "pendingUserActions: ${_pendingUserActions.size}" }
         if (_pendingUserActions.size > 0) {
             notificationRepository.createInstallNotification()
+        }
+    }
+
+    fun requestUserActionIfNeeded() {
+        runBlocking {
+            _pendingUserActions.peek()?.let { intent ->
+                val packageName = intent.getStringExtra(PackageInstaller.EXTRA_SESSION_ID) ?: "undefined package"
+                _pendingUserActionEvents.emit(packageName)
+            }
         }
     }
 

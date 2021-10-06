@@ -57,17 +57,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        /**
+         * We redeliver pending status intents that were cached in case the user hasn't confirmed
+         * them yet
+         */
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.redeliverPendingUserActions()
+            }
+        }
+
         // We display the app UI
         setContent {
             AppInstallerTheme {
                 Router(viewModel)
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-//        viewModel.redeliverPendingUserActions()
     }
 
     /**
@@ -87,15 +92,16 @@ class MainActivity : ComponentActivity() {
         super.onResume()
 
         viewModel.markUserActionComplete()
+        viewModel.requestUserActionIfNeeded()
         viewModel.refreshLibrary()
     }
 
     /**
-     * We show a notification if there are still pending user actions when the app gets paused
+     * We show a notification if there are still pending user actions when the app gets stopped
      */
-    override fun onPause() {
+    override fun onStop() {
         viewModel.notifyPendingUserActions()
-        super.onPause()
+        super.onStop()
     }
 
     /**
@@ -114,7 +120,6 @@ class MainActivity : ComponentActivity() {
         viewModel.getPendingUserAction()?.let { intent ->
             val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
             viewModel.initSessionActionObserver(sessionId)
-//            viewModel.startSessionActionObserver()
 
             startActivity(intent.getParcelableExtra(Intent.EXTRA_INTENT))
         }

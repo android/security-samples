@@ -90,6 +90,7 @@ class AppViewModel @Inject constructor(
     }
 
     fun notifyPendingUserActions() = installer.notifyPendingUserActions()
+    fun requestUserActionIfNeeded() = installer.requestUserActionIfNeeded()
 
     fun getPendingUserAction() = installer.getPendingUserAction()
     fun redeliverPendingUserActions() = viewModelScope.launch {
