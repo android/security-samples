@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller.store
 
 import androidx.annotation.DrawableRes
 
 data class AppPackage(
-    val id: Int,
-    val name: String,
+    val packageName: String,
     val label: String,
     val company: String,
     @DrawableRes val icon: Int,
@@ -29,5 +27,5 @@ data class AppPackage(
 )
 
 enum class AppStatus {
-    UNINSTALLED, INSTALLED, INSTALLING, UPGRADING
+    UNINSTALLED, UNINSTALLING, INSTALLED, INSTALLING, UPGRADING
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller.settings
 
 import android.content.Context
@@ -25,7 +24,7 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val settings = context.appSettings
+    val appSettings = context.appSettings
 
     suspend fun setAutoUpdateSchedule(value: Int) {
         context.appSettings.updateData { currentSettings ->

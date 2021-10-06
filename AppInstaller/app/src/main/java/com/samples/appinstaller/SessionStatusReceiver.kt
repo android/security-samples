@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller
 
 import android.content.BroadcastReceiver
@@ -29,13 +28,14 @@ import javax.inject.Inject
 class SessionStatusReceiver : BroadcastReceiver() {
     companion object {
         const val INSTALL_ACTION = "install_action"
+        const val UPGRADE_ACTION = "upgrade_action"
         const val UNINSTALL_ACTION = "uninstall_action"
         const val REDELIVER_ACTION = "redeliver_action"
         const val EXTRA_REDELIVER = "is_redelivered"
     }
 
     @Inject
-    lateinit var repository: AppRepository
+    lateinit var installer: PackageInstallerRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
@@ -49,16 +49,13 @@ class SessionStatusReceiver : BroadcastReceiver() {
          * Redelivered intents are cached intents that the user hasn't interacted yet with
          */
         if (isRedelivered) {
-            return repository.onInstallPendingUserAction(packageName, intent)
+            logcat { "This is a redelivery" }
+//            installer.onInstalling(packageName)
+//            return installer.onInstallPendingUserAction(packageName, intent)
         }
 
         logcat {
-            """
-               Received sessionId=$sessionId, 
-               packageName=$packageName, 
-               status=${statusToString(status)}, 
-               message=$message"
-            """.trimIndent()
+            "Received sessionId=$sessionId, packageName=$packageName, status=${statusToString(status)}, message=$message"
         }
 
         when (status) {
@@ -67,8 +64,12 @@ class SessionStatusReceiver : BroadcastReceiver() {
              */
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 when (action) {
-                    INSTALL_ACTION -> repository.onInstallPendingUserAction(packageName, intent)
-                    UNINSTALL_ACTION -> repository.onUninstallPendingUserAction(packageName, intent)
+                    INSTALL_ACTION -> {
+                        installer.onInstallPendingUserAction(packageName, intent)
+                    }
+                    UNINSTALL_ACTION -> {
+                        installer.onUninstallPendingUserAction(packageName, intent)
+                    }
                     else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }
@@ -77,8 +78,12 @@ class SessionStatusReceiver : BroadcastReceiver() {
              */
             PackageInstaller.STATUS_SUCCESS -> {
                 when (action) {
-                    INSTALL_ACTION -> repository.onInstallSuccess(packageName)
-                    UNINSTALL_ACTION -> repository.onUninstallSuccess(packageName)
+                    INSTALL_ACTION -> {
+                        installer.onInstallSuccess(packageName)
+                    }
+                    UNINSTALL_ACTION -> {
+                        installer.onUninstallSuccess(packageName)
+                    }
                     else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }
@@ -93,8 +98,10 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE_INVALID,
             PackageInstaller.STATUS_FAILURE_STORAGE -> {
                 when (action) {
-                    INSTALL_ACTION -> repository.onInstallFailure(packageName)
-                    UNINSTALL_ACTION -> repository.onInstallFailure(packageName)
+                    INSTALL_ACTION,
+                    UNINSTALL_ACTION -> {
+                        installer.onInstallFailure(packageName)
+                    }
                     else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
             }

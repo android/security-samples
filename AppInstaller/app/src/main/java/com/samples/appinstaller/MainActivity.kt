@@ -13,34 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller
 
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.samples.appinstaller.ui.theme.AppInstallerTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import logcat.logcat
 
 @AndroidEntryPoint
+@ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
-    private val TAG = MainActivity::class.java.simpleName
     private val viewModel: AppViewModel by viewModels()
-    private var pendingInstallsJob: Job? = null
-    private var intentLaunchingJob: Job? = null
 
-    @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        /**
+         * We collect send pending user action intents from [AppViewModel.pendingUserActionEvents]
+         * flow once the activity is resumed and cancel the collect once it leaves this state
+         */
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.pendingUserActionEvents.collect(::onPendingUserAction)
+            }
+        }
+
+        /**
+         * We collect send launching app intents from [AppViewModel.appsToBeOpened] flow once the
+         * activity is resumed and cancel the collect once it leaves this state
+         */
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.appsToBeOpened.collect(::startActivity)
+            }
+        }
+
+        // We display the app UI
         setContent {
             AppInstallerTheme {
                 Router(viewModel)
@@ -50,30 +69,53 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        viewModel.redeliverPendingUserActions()
+//        viewModel.redeliverPendingUserActions()
     }
 
+    /**
+     * This method is called before [onResume] when a new intent is received.
+     * When our app is re-launched from home screen or notification, because our launch mode is
+     * singleTask, any other activity in our task will be finished.
+     */
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        viewModel.cancelActiveUserAction()
+    }
+
+    /**
+     * When [onResume] is called, we track any active user action and update our library
+     */
     override fun onResume() {
         super.onResume()
 
-        pendingInstallsJob = lifecycleScope.launch {
-            viewModel.pendingInstallUserActionEvents.collect(::onPendingUserAction)
-        }
-
-        intentLaunchingJob = lifecycleScope.launch {
-            viewModel.intentsToBeLaunched.collect(::startActivity)
-        }
+        viewModel.markUserActionComplete()
+        viewModel.refreshLibrary()
     }
 
     override fun onPause() {
-        pendingInstallsJob?.cancel()
-        intentLaunchingJob?.cancel()
-        viewModel.notifyPendingInstalls()
+//        viewModel.notifyPendingInstalls()
         super.onPause()
     }
 
-    private fun onPendingUserAction(statusIntent: Intent) {
-        Log.d(TAG, "MainActivity onPendingUserAction")
-        startActivity(statusIntent.getParcelableExtra(Intent.EXTRA_INTENT))
+    /**
+     * Before launching the intent containing the user confirmation dialog for install/uninstall
+     * operation, we start monitoring with a [SessionActionObserver] any changes from the
+     * [PackageInstaller]. As there's no way to listen to the dismiss of the dialog (which is
+     * different from user cancelling it), we keep track of that specific session and start a timer
+     * inside [onResume] with [AppViewModel.markUserActionComplete].
+     * Within a second, the [PackageInstaller] should have sent a success/failure intent to
+     * [SessionStatusReceiver] otherwise it means the user has dismissed the dialog and we cancel
+     * the operation and update the UI
+     */
+    private fun onPendingUserAction(packageName: String) {
+        logcat { "onPendingUserAction: $packageName" }
+
+        viewModel.getPendingUserAction()?.let { intent ->
+            val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
+            viewModel.initSessionActionObserver(sessionId)
+//            viewModel.startSessionActionObserver()
+
+            startActivity(intent.getParcelableExtra(Intent.EXTRA_INTENT))
+        }
     }
 }

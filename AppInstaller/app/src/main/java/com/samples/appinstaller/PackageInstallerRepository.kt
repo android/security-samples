@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller
 
 import android.app.PendingIntent
@@ -26,95 +25,59 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.core.os.BuildCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.samples.appinstaller.store.AppPackage
-import com.samples.appinstaller.store.AppStatus
-import com.samples.appinstaller.store.StoreRepository
+import com.samples.appinstaller.store.LibraryRepository
 import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import logcat.LogPriority
+import logcat.asLog
+import logcat.logcat
 import java.io.IOException
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppRepository @Inject constructor(
+class PackageInstallerRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val library: LibraryRepository,
     private val notificationRepository: NotificationRepository
 ) {
-    private val TAG = this.javaClass.simpleName
-
     private val packageManager: PackageManager
         get() = context.packageManager
 
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
 
-    private val _apps = MutableStateFlow(StoreRepository.apps)
-    val apps: StateFlow<List<AppPackage>> = _apps
+    private val _pendingUserActions: Queue<Intent> = LinkedList()
+    private val _pendingUserActionEvents = MutableSharedFlow<String>()
+    val pendingUserActionEvents: SharedFlow<String> = _pendingUserActionEvents
 
-    fun getAppByName(name: String): AppPackage? {
-        return apps.value.find { app -> app.name == name }
-    }
-
-    private fun updateAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
-        _apps.value = _apps.value.map { app ->
-            if (app.name == packageName) transform(app) else app
+    private fun addPendingUserAction(packageName: String, intent: Intent) {
+        _pendingUserActions.add(intent)
+        runBlocking {
+            _pendingUserActionEvents.emit(packageName)
         }
     }
 
-    suspend fun loadLibrary() {
-        withContext(Dispatchers.IO) {
-            val installedPackages = packageManager.getInstalledPackages(0)
-
-            _apps.value = StoreRepository.apps
-                .map { app ->
-                    val installedPackage = installedPackages.find { it.packageName == app.name }
-
-                    if (installedPackage != null) {
-                        app.copy(
-                            status = AppStatus.INSTALLED,
-                            updatedAt = installedPackage.lastUpdateTime
-                        )
-                    } else {
-                        app
-                    }
-                }
-                .map { app ->
-                    if (appsBeingInstalled.contains(app.name)) {
-                        app.copy(
-                            status = if (app.status == AppStatus.INSTALLED) {
-                                AppStatus.UPGRADING
-                            } else {
-                                AppStatus.INSTALLING
-                            }
-                        )
-                    } else {
-                        app
-                    }
-                }
-        }
+    fun removePendingUserAction(packageName: String, intent: Intent) {
+        _pendingUserActions.remove(intent)
     }
 
-    private val appsBeingInstalled = mutableSetOf<String>()
-    private val pendingUserActions: Queue<Intent> = LinkedList()
-    private val _pendingUserActionEvents = MutableSharedFlow<Intent>()
-    val pendingUserActionEvents: SharedFlow<Intent> = _pendingUserActionEvents
-
+    /**
+     * Check if the app is allowed to install apps
+     */
     fun canInstallPackages(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             packageManager.canRequestPackageInstalls()
@@ -123,10 +86,28 @@ class AppRepository @Inject constructor(
         }
     }
 
+    /**
+     * Check if this package name is part of our store apps
+     */
+    fun isAppInstallable(packageName: String): Boolean {
+        return library.containsApp(packageName)
+    }
+
+    /**
+     * Get app launching intent (main intent with intent filter: android.intent.action.MAIN)
+     */
     fun getAppLaunchingIntent(packageName: String) =
         packageManager.getLaunchIntentForPackage(packageName)
 
+    /**
+     * Uninstall this package name
+     */
     fun uninstallApp(packageName: String) {
+        /**
+         * We request an uninstallation from [PackageInstaller] and provides a pending intent that
+         * will be send back to our app via [com.samples.appinstaller.SessionStatusReceiver] after
+         * the uninstallation has started
+         */
         val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
             action = SessionStatusReceiver.UNINSTALL_ACTION
             data = Uri.fromParts("package", packageName, null)
@@ -137,16 +118,31 @@ class AppRepository @Inject constructor(
         packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
     }
 
+    /**
+     * Cancel all pending & active installs or upgrades related to this package name
+     */
     suspend fun cancelInstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        updateAppState(packageName) {
-            it.copy(status = if (it.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
-        }
+        /**
+         * We cancel all pending and active [InstallWorker] jobs related to [packageName]
+         */
         WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
+        /**
+         * We abandon all [PackageInstaller.Session] related to [packageName]
+         */
         abandonInstallSessions(packageName)
+
+        // We update the library to change the app status
+        library.cancelInstall(packageName)
     }
 
+    /**
+     * Initialize an install session for this package name
+     */
     fun installApp(packageName: String) {
+        // We update the library to set this app as being installed
+        onInstalling(packageName)
+
+        // We add this install job to our WorkManager queue
         val installWorkRequest = OneTimeWorkRequestBuilder<InstallWorker>()
             .addTag(packageName)
             .setInputData(workDataOf(InstallWorker.PACKAGE_NAME_KEY to packageName))
@@ -155,6 +151,9 @@ class AppRepository @Inject constructor(
         WorkManager.getInstance(context).enqueue(installWorkRequest)
     }
 
+    /**
+     * Generate an install session to be created and opened by the [PackageInstaller]
+     */
     fun createInstallSession(packageName: String): PackageInstaller.Session? {
         val params = SessionParams(SessionParams.MODE_FULL_INSTALL)
             .apply {
@@ -173,15 +172,20 @@ class AppRepository @Inject constructor(
             val sessionId = packageInstaller.createSession(params)
             val session = packageInstaller.openSession(sessionId)
 
+            // We update the library to set this app as being installed
             onInstalling(packageName)
+
             session
         } catch (e: IOException) {
-            Log.e(TAG, "Exception when creating session", e)
-            onInstallFailure(packageName)
+            logcat(LogPriority.ERROR) { "Exception when creating session ${e.asLog()}" }
+            library.cancelInstall(packageName)
             null
         }
     }
 
+    /**
+     * Abandon all [PackageInstaller.Session] related to [packageName]
+     */
     private suspend fun abandonInstallSessions(packageName: String) {
         withContext(Dispatchers.IO) {
             packageInstaller.allSessions
@@ -190,11 +194,22 @@ class AppRepository @Inject constructor(
                     try {
                         packageInstaller.abandonSession(session.sessionId)
                     } catch (e: SecurityException) {
+                        /**
+                         * Some install sessions may have been created by other apps using
+                         * [PackageInstaller] and can't be abandoned. Also after uninstalling your
+                         * own app, your sessions lose owners and can't be abandoned by yourself
+                         * after a reinstall. The system cleans up automatically old sessions after
+                         * a certain period
+                         */
                     }
                 }
         }
     }
 
+    /**
+     * Create a status [Intent] that will be used to call the [SessionStatusReceiver] once an
+     * install session has been processed
+     */
     private fun createStatusIntent(packageName: String): Intent {
         return Intent(context, SessionStatusReceiver::class.java).apply {
             action = SessionStatusReceiver.INSTALL_ACTION
@@ -205,6 +220,10 @@ class AppRepository @Inject constructor(
         }
     }
 
+    /**
+     * Create a [PendingIntent] that will hold a status [Intent] created by [createStatusIntent] to
+     * callback the [SessionStatusReceiver] once an install session has been processed
+     */
     fun createStatusPendingIntent(packageName: String): PendingIntent {
         return PendingIntent.getBroadcast(
             context,
@@ -214,6 +233,10 @@ class AppRepository @Inject constructor(
         )
     }
 
+    /**
+     * We update the saved [PendingIntent] (only if there's one already) to make sure the system
+     * caches only the most recent install operation that requires user action
+     */
     private fun updateStatusPendingIntent(intent: Intent): PendingIntent {
         return PendingIntent.getBroadcast(
             context,
@@ -223,6 +246,11 @@ class AppRepository @Inject constructor(
         )
     }
 
+    /**
+     * We request a [PendingIntent] related to [packageName] from the system only if there's one
+     * already. In this case, it means our pending user action intent hasn't been completed by the
+     * user yet, so we bring it back to the user to complete or cancel it
+     */
     private fun getCachedStatusPendingIntent(packageName: String): PendingIntent? {
         return PendingIntent.getBroadcast(
             context,
@@ -232,9 +260,13 @@ class AppRepository @Inject constructor(
         )
     }
 
-    private fun cacheStatusPendingIntent(statusIntent: Intent) {
+    /**
+     * We save this status intent inside a pending one to be used for later when the user
+     */
+    private fun saveStatusPendingIntentForLater(statusIntent: Intent) {
         val packageName = statusIntent.data!!.schemeSpecificPart
-        Log.d(TAG, "Caching status intent for $packageName")
+        logcat { "saveStatusPendingIntentForLater $packageName" }
+
         // Don't save these extras which we want to receive future changes to.
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS)
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
@@ -243,19 +275,32 @@ class AppRepository @Inject constructor(
         updateStatusPendingIntent(statusIntent)
     }
 
+    /**
+     * Once an install/uninstall operation is complete, we cancel any pending status intent related
+     * to the given package name (to not trigger user action once the app is resumed
+     */
+    private fun cancelStatusPendingIntent(packageName: String) {
+        logcat { "cancelStatusPendingIntent $packageName" }
+        getCachedStatusPendingIntent(packageName)?.cancel()
+    }
+
     fun getPendingUserAction(): Intent? {
-        return pendingUserActions.peek()
+        return _pendingUserActions.peek()
+    }
+
+    fun removePendingUserAction(): Intent? {
+        return _pendingUserActions.remove()
     }
 
     suspend fun redeliverPendingUserActions() {
         withContext(Dispatchers.IO) {
             packageInstaller.mySessions
-                .filter {
-                    val packageName = it.appPackageName ?: return@filter false
-                    getAppByName(packageName) != null
+                .filter { sessionInfo ->
+                    val packageName = sessionInfo.appPackageName ?: return@filter false
+                    library.containsApp(packageName)
                 }
-                .map { it.appPackageName!! }
-                .distinct()
+                .distinctBy { it.appPackageName }
+                .mapNotNull { it.appPackageName }
                 .forEach { packageName ->
                     getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
                         try {
@@ -264,7 +309,8 @@ class AppRepository @Inject constructor(
                                 0,
                                 Intent(SessionStatusReceiver.REDELIVER_ACTION)
                             )
-                            Log.d(TAG, "Redelivered status intent for $packageName")
+
+                            logcat { "Redelivered status intent for $packageName" }
                         } catch (ignored: CanceledException) {
                         }
                     }
@@ -273,58 +319,74 @@ class AppRepository @Inject constructor(
     }
 
     fun onInstallPendingUserAction(packageName: String, statusIntent: Intent) {
-        appsBeingInstalled.add(packageName)
-        pendingUserActions.add(statusIntent)
-        updateAppState(packageName) { it.copy(status = if (it.updatedAt > -1) AppStatus.UPGRADING else AppStatus.INSTALLING) }
-        cacheStatusPendingIntent(statusIntent)
+        logcat { "onInstallPendingUserAction $packageName" }
+        // We update the library to set this app as being installed
+        onInstalling(packageName)
 
-        GlobalScope.launch {
-            _pendingUserActionEvents.emit(statusIntent)
+        runBlocking {
+            addPendingUserAction(packageName, statusIntent)
         }
 
+        // We save the pending user action to deliver it later to the user if the action isn't
+        // completed during this activity lifecycle
+        saveStatusPendingIntentForLater(statusIntent)
+
+        // TODO: Deal with notification
         if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            notifyPendingInstalls()
+            notifyPendingUserActions()
         }
     }
 
     fun onUninstallPendingUserAction(packageName: String, statusIntent: Intent) {
-        GlobalScope.launch {
-            _pendingUserActionEvents.emit(statusIntent)
+        logcat { "onUninstallPendingUserAction $packageName" }
+        // We update the library to set this app as being uninstalled
+        library.addUninstall(packageName)
+        // We save the pending user action to deliver it to the user
+        _pendingUserActions.add(statusIntent)
+
+        runBlocking {
+            _pendingUserActionEvents.emit(packageName)
         }
     }
 
-    fun notifyPendingInstalls() {
-        println("pendingUserActions: ${pendingUserActions.size}")
-        if (pendingUserActions.size > 0) {
+    fun notifyPendingUserActions() {
+        logcat { "pendingUserActions: ${_pendingUserActions.size}" }
+        if (_pendingUserActions.size > 0) {
             notificationRepository.createInstallNotification()
         }
     }
 
+    fun createSessionActionObserver(sessionId: Int): SessionActionObserver {
+        return SessionActionObserver(packageInstaller, sessionId)
+    }
+
     private fun onInstalling(packageName: String) {
-        appsBeingInstalled.add(packageName)
-        updateAppState(packageName) { it.copy(status = AppStatus.INSTALLING) }
+        logcat { "onInstalling $packageName" }
+        // We update the library to set this app as being installed
+        library.addInstall(packageName)
     }
 
     fun onInstallSuccess(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        updateAppState(packageName) {
-            it.copy(
-                status = AppStatus.INSTALLED,
-                updatedAt = System.currentTimeMillis()
-            )
-        }
+        logcat { "onInstallSuccess $packageName" }
+        library.completeInstall(packageName)
+        cancelStatusPendingIntent(packageName)
     }
 
     fun onInstallFailure(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        updateAppState(packageName) { it.copy(status = if (it.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED) }
+        logcat { "onInstallFailure $packageName" }
+        library.cancelInstall(packageName)
+        cancelStatusPendingIntent(packageName)
     }
 
     fun onUninstallSuccess(packageName: String) {
-        updateAppState(packageName) { it.copy(status = AppStatus.UNINSTALLED, updatedAt = -1) }
+        logcat { "onUninstallSuccess $packageName" }
+        library.completeUninstall(packageName)
+        cancelStatusPendingIntent(packageName)
     }
 
     fun onUninstallFailure(packageName: String) {
-        updateAppState(packageName) { it.copy(status = AppStatus.INSTALLED) }
+        logcat { "onUninstallFailure $packageName" }
+        library.cancelUninstall(packageName)
+        cancelStatusPendingIntent(packageName)
     }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller.settings
 
 import androidx.compose.foundation.clickable
@@ -59,7 +58,7 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
         }
     }
 
-    val settings by viewModel.settings.collectAsState()
+    val settings by viewModel.appSettings.collectAsState()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
@@ -118,7 +117,8 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    onClick = { /*TODO*/ }) {
+                    onClick = { /*TODO*/ }
+                ) {
                     Text("Trigger auto-updating manually")
                 }
             }

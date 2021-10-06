@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.samples.appinstaller.workers
 
 import android.content.Context
@@ -21,8 +20,7 @@ import android.content.pm.PackageInstaller
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.samples.appinstaller.AppRepository
-import com.samples.appinstaller.store.AppPackage
+import com.samples.appinstaller.PackageInstallerRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +34,7 @@ import java.io.IOException
 class InstallWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val repository: AppRepository
+    private val installer: PackageInstallerRepository,
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -44,18 +42,19 @@ class InstallWorker @AssistedInject constructor(
         const val FAKE_DOWNLOADING_DELAY = 3000L
     }
 
-    private lateinit var app: AppPackage
-
     override suspend fun doWork(): Result = coroutineScope {
-        val packageName =
-            inputData.getString(PACKAGE_NAME_KEY) ?: return@coroutineScope Result.failure()
-        app = repository.getAppByName(packageName) ?: return@coroutineScope Result.failure()
+        // We stop the install worker if we don't have the package name as argument
+        val packageName = inputData.getString(PACKAGE_NAME_KEY)
+            ?: return@coroutineScope Result.failure()
+
+        // We verify if the provided package name is part of our store apps
+        if (!installer.isAppInstallable(packageName)) return@coroutineScope Result.failure()
 
         try {
-            logcat { "Installing: ${app.name}" }
+            logcat { "Installing: $packageName" }
             // We ask PackageInstaller to create an install sesssion
-            val session =
-                repository.createInstallSession(app.name) ?: return@coroutineScope Result.failure()
+            val session = installer.createInstallSession(packageName)
+                ?: return@coroutineScope Result.failure()
 
             // We simulate a delay as installers would probably download first the APK from a remote
             // server and write the APK bytes in the system afterwards
@@ -63,7 +62,7 @@ class InstallWorker @AssistedInject constructor(
             delay(FAKE_DOWNLOADING_DELAY)
 
             // We copy our apk bytes to the install session OutputStream opened via PackageInstaller
-            writeApkToSession(session)
+            writeApkToSession(packageName, session)
 
             /**
              * We commit our session to finalize it and give it a pending intent that will be send
@@ -71,7 +70,7 @@ class InstallWorker @AssistedInject constructor(
              * session has been processed
              */
             logcat { "Committing session for $packageName" }
-            val pendingIntent = repository.createStatusPendingIntent(packageName)
+            val pendingIntent = installer.createStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
         } catch (e: IOException) {
             e.printStackTrace()
@@ -87,14 +86,14 @@ class InstallWorker @AssistedInject constructor(
     /**
      * Save APK in the provided session
      */
-    private suspend fun writeApkToSession(session: PackageInstaller.Session) {
+    private suspend fun writeApkToSession(packageName: String, session: PackageInstaller.Session) {
         withContext(Dispatchers.IO) {
             // We open the apk from our assets folder and save it to the OutputStream provided by
             // PackageInstaller to install that app
-            logcat { "Writing APK (${app.name}) to session (${session.parentSessionId})..." }
+            logcat { "Writing APK ($packageName) to session (${session.parentSessionId})..." }
 
             session.openWrite("package", 0, -1).use { destination ->
-                applicationContext.assets.open("${app.name}.apk").copyTo(destination)
+                applicationContext.assets.open("$packageName.apk").copyTo(destination)
             }
         }
     }
