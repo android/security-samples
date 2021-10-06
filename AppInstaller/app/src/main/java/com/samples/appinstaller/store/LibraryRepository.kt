@@ -155,20 +155,6 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
                 }
             )
         }
-
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) {
-//                app.copy(
-//                    status = if (app.status == AppStatus.INSTALLED) {
-//                        AppStatus.UPGRADING
-//                    } else {
-//                        AppStatus.INSTALLING
-//                    }
-//                )
-//            } else {
-//                app
-//            }
-//        }
     }
 
     /**
@@ -181,14 +167,6 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
         setAppState(packageName) { app ->
             app.copy(status = AppStatus.INSTALLED, updatedAt = System.currentTimeMillis())
         }
-
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) {
-//                app.copy(status = AppStatus.INSTALLED, updatedAt = System.currentTimeMillis())
-//            } else {
-//                app
-//            }
-//        }
     }
 
     /**
@@ -201,13 +179,6 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
         setAppState(packageName) { app ->
             app.copy(status = AppStatus.UNINSTALLING)
         }
-
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) app.copy(
-//                status = AppStatus.UNINSTALLED,
-//                updatedAt = -1
-//            ) else app
-//        }
     }
 
     /**
@@ -220,13 +191,6 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
         setAppState(packageName) { app ->
             app.copy(status = AppStatus.UNINSTALLED, updatedAt = -1)
         }
-
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) app.copy(
-//                status = AppStatus.UNINSTALLED,
-//                updatedAt = -1
-//            ) else app
-//        }
     }
 
     /**
@@ -244,11 +208,6 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
         setAppState(packageName) { app ->
             app.copy(status = if (app.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
         }
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) {
-//                app.copy(status = if (app.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
-//            } else app
-//        }
     }
 
     /**
@@ -261,8 +220,5 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
         setAppState(packageName) { app ->
             app.copy(status = AppStatus.INSTALLED)
         }
-//        _apps.value = _apps.value.map { app ->
-//            if (app.packageName == packageName) app.copy(status = AppStatus.INSTALLED) else app
-//        }
     }
 }
