@@ -21,7 +21,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,7 +31,6 @@ import kotlinx.coroutines.launch
 import logcat.logcat
 
 @AndroidEntryPoint
-@ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
 
@@ -40,8 +38,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         /**
-         * We collect send pending user action intents from [AppViewModel.pendingUserActionEvents]
-         * flow once the activity is resumed and cancel the collect once it leaves this state
+         * We collect pending user action intents from [AppViewModel.pendingUserActionEvents] flow
+         * once the activity is resumed and cancel the collect once it leaves this state
          */
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -50,7 +48,7 @@ class MainActivity : ComponentActivity() {
         }
 
         /**
-         * We collect send launching app intents from [AppViewModel.appsToBeOpened] flow once the
+         * We collect launching app intents from [AppViewModel.appsToBeOpened] flow once the
          * activity is resumed and cancel the collect once it leaves this state
          */
         lifecycleScope.launch {
@@ -92,8 +90,11 @@ class MainActivity : ComponentActivity() {
         viewModel.refreshLibrary()
     }
 
+    /**
+     * We show a notification if there are still pending user actions when the app gets paused
+     */
     override fun onPause() {
-//        viewModel.notifyPendingInstalls()
+        viewModel.notifyPendingUserActions()
         super.onPause()
     }
 

@@ -26,7 +26,6 @@ import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.ListItem
 import androidx.compose.material.MaterialTheme
@@ -49,7 +48,6 @@ import com.samples.appinstaller.AppViewModel
 import com.samples.appinstaller.R
 import com.samples.appinstaller.Route
 
-@ExperimentalMaterialApi
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
     LaunchedEffect(viewModel.canInstallPackages()) {
@@ -126,7 +124,6 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
     )
 }
 
-@ExperimentalMaterialApi
 @Composable
 fun SettingItem(
     settingLabel: String,

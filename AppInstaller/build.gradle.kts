@@ -54,4 +54,9 @@ subprojects {
             )
         }
     }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.freeCompilerArgs +=
+            "-Xuse-experimental=androidx.compose.material.ExperimentalMaterialApi"
+    }
 }

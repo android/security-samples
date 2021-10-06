@@ -15,7 +15,6 @@
  */
 package com.samples.appinstaller
 
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -26,7 +25,6 @@ import androidx.navigation.compose.rememberNavController
 import com.samples.appinstaller.settings.SettingsScreen
 import com.samples.appinstaller.store.StoreScreen
 
-@ExperimentalMaterialApi
 @Composable
 fun Router(viewModel: AppViewModel) {
     val navController = rememberNavController()

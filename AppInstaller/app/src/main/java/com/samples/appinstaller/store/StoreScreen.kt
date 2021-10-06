@@ -33,7 +33,6 @@ import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LinearProgressIndicator
@@ -58,7 +57,6 @@ import com.samples.appinstaller.AppViewModel
 import com.samples.appinstaller.R
 import com.samples.appinstaller.Route
 
-@ExperimentalMaterialApi
 @Composable
 fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
     LaunchedEffect(viewModel.canInstallPackages()) {
@@ -114,7 +112,6 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
     )
 }
 
-@ExperimentalMaterialApi
 @Composable
 fun AppItem(
     app: AppPackage,
