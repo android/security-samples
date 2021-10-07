@@ -38,6 +38,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         /**
+         * We remove the notification if it exists as user actions will be shown inside the app
+         */
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.cancelInstallNotification()
+            }
+        }
+
+        /**
          * We collect pending user action intents from [AppViewModel.pendingUserActionEvents] flow
          * once the activity is resumed and cancel the collect once it leaves this state
          */
@@ -114,8 +123,8 @@ class MainActivity : ComponentActivity() {
      * [SessionStatusReceiver] otherwise it means the user has dismissed the dialog and we cancel
      * the operation and update the UI
      */
-    private fun onPendingUserAction(packageName: String) {
-        logcat { "onPendingUserAction: $packageName" }
+    private fun onPendingUserAction(statusIntent: Intent) {
+        logcat { "onPendingUserAction: $statusIntent" }
 
         viewModel.getPendingUserAction()?.let { intent ->
             val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)

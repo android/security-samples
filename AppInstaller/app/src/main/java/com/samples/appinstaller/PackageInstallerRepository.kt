@@ -61,13 +61,13 @@ class PackageInstallerRepository @Inject constructor(
         get() = context.packageManager.packageInstaller
 
     private val _pendingUserActions: Queue<Intent> = LinkedList()
-    private val _pendingUserActionEvents = MutableSharedFlow<String>()
-    val pendingUserActionEvents: SharedFlow<String> = _pendingUserActionEvents
+    private val _pendingUserActionEvents = MutableSharedFlow<Intent>()
+    val pendingUserActionEvents: SharedFlow<Intent> = _pendingUserActionEvents
 
     private fun addPendingUserAction(packageName: String, intent: Intent) {
         _pendingUserActions.add(intent)
         runBlocking {
-            _pendingUserActionEvents.emit(packageName)
+            _pendingUserActionEvents.emit(intent)
         }
     }
 
@@ -348,7 +348,7 @@ class PackageInstallerRepository @Inject constructor(
         _pendingUserActions.add(statusIntent)
 
         runBlocking {
-            _pendingUserActionEvents.emit(packageName)
+            _pendingUserActionEvents.emit(statusIntent)
         }
     }
 
@@ -359,11 +359,14 @@ class PackageInstallerRepository @Inject constructor(
         }
     }
 
+    fun cancelInstallNotification() {
+        notificationRepository.cancelInstallNotification()
+    }
+
     fun requestUserActionIfNeeded() {
         runBlocking {
             _pendingUserActions.peek()?.let { intent ->
-                val packageName = intent.getStringExtra(PackageInstaller.EXTRA_SESSION_ID) ?: "undefined package"
-                _pendingUserActionEvents.emit(packageName)
+                _pendingUserActionEvents.emit(intent)
             }
         }
     }

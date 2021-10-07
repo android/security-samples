@@ -89,6 +89,8 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun cancelInstallNotification() = installer.cancelInstallNotification()
+
     fun notifyPendingUserActions() = installer.notifyPendingUserActions()
     fun requestUserActionIfNeeded() = installer.requestUserActionIfNeeded()
 
@@ -130,34 +132,34 @@ class AppViewModel @Inject constructor(
     /**
      * Trigger an app install
      */
-    fun installApp(app: AppPackage) {
+    fun installApp(packageName: String) {
         // We initialize an install session
-        installer.installApp(app.packageName)
+        installer.installApp(packageName)
     }
 
     /**
      * Cancel ongoing app install
      */
-    fun cancelInstall(app: AppPackage) {
+    fun cancelInstall(packageName: String) {
         viewModelScope.launch {
             // We cancel all running install sessions related to this app
-            installer.cancelInstall(app.packageName)
+            installer.cancelInstall(packageName)
         }
     }
 
     /**
      * Trigger an app uninstall
      */
-    fun uninstallApp(app: AppPackage) {
-        installer.uninstallApp(app.packageName)
+    fun uninstallApp(packageName: String) {
+        installer.uninstallApp(packageName)
     }
 
     /**
      * Get app launching intent and send it to [MainActivity] to be launched
      */
-    fun openApp(appPackage: AppPackage) {
+    fun openApp(packageName: String) {
         viewModelScope.launch {
-            installer.getAppLaunchingIntent(appPackage.packageName)
+            installer.getAppLaunchingIntent(packageName)
                 ?.let { _appsToBeOpened.emit(it) }
         }
     }

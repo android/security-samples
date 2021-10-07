@@ -67,11 +67,11 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
 
     val apps by viewModel.apps.collectAsState()
 
-    fun install(app: AppPackage) = viewModel.installApp(app)
-    fun upgrade(app: AppPackage) = viewModel.installApp(app)
-    fun uninstall(app: AppPackage) = viewModel.uninstallApp(app)
-    fun open(app: AppPackage) = viewModel.openApp(app)
-    fun cancel(app: AppPackage) = viewModel.cancelInstall(app)
+    fun install(app: AppPackage) = viewModel.installApp(app.packageName)
+    fun upgrade(app: AppPackage) = viewModel.installApp(app.packageName)
+    fun uninstall(app: AppPackage) = viewModel.uninstallApp(app.packageName)
+    fun open(app: AppPackage) = viewModel.openApp(app.packageName)
+    fun cancel(app: AppPackage) = viewModel.cancelInstall(app.packageName)
 
     Scaffold(
         topBar = {
