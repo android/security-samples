@@ -129,6 +129,8 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
                 } else {
                     app
                 }
+            }.sortedBy {
+                it.label
             }
         }
     }
@@ -136,6 +138,8 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
     private fun setAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
         _apps.value = _apps.value.map { app ->
             if (app.packageName == packageName) transform(app) else app
+        }.sortedBy {
+            it.label
         }
     }
 

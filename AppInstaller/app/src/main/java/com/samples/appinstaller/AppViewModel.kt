@@ -19,7 +19,6 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.samples.appinstaller.settings.SettingsRepository
-import com.samples.appinstaller.store.AppPackage
 import com.samples.appinstaller.store.LibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
