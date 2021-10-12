@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
          * them yet
          */
         lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 viewModel.redeliverPendingUserActions()
             }
         }
@@ -102,7 +102,6 @@ class MainActivity : ComponentActivity() {
 
         viewModel.markUserActionComplete()
         viewModel.requestUserActionIfNeeded()
-        viewModel.refreshLibrary()
     }
 
     /**

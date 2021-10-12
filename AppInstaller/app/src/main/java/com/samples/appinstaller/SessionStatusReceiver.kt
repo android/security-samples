@@ -48,10 +48,9 @@ class SessionStatusReceiver : BroadcastReceiver() {
         /**
          * Redelivered intents are cached intents that the user hasn't interacted yet with
          */
-        if (isRedelivered) {
+        if (isRedelivered && status < 0) {
             logcat { "This is a redelivery" }
-//            installer.onInstalling(packageName)
-//            return installer.onInstallPendingUserAction(packageName, intent)
+            return installer.onInstallPendingUserAction(packageName, intent)
         }
 
         logcat {
@@ -65,6 +64,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 when (action) {
                     INSTALL_ACTION -> {
+                        installer.saveStatusPendingIntentForLater(intent)
                         installer.onInstallPendingUserAction(packageName, intent)
                     }
                     UNINSTALL_ACTION -> {

@@ -263,7 +263,7 @@ class PackageInstallerRepository @Inject constructor(
     /**
      * We save this status intent inside a pending one to be used for later when the user
      */
-    private fun saveStatusPendingIntentForLater(statusIntent: Intent) {
+    fun saveStatusPendingIntentForLater(statusIntent: Intent) {
         val packageName = statusIntent.data!!.schemeSpecificPart
         logcat { "saveStatusPendingIntentForLater $packageName" }
 
@@ -321,7 +321,7 @@ class PackageInstallerRepository @Inject constructor(
         }
     }
 
-    fun onInstallPendingUserAction(packageName: String, statusIntent: Intent) {
+    fun onRedeliveredInstallPendingUserAction(packageName: String, statusIntent: Intent) {
         logcat { "onInstallPendingUserAction $packageName" }
         // We update the library to set this app as being installed
         onInstalling(packageName)
@@ -335,6 +335,21 @@ class PackageInstallerRepository @Inject constructor(
         saveStatusPendingIntentForLater(statusIntent)
 
         // TODO: Deal with notification
+        if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            notifyPendingUserActions()
+        }
+    }
+
+    fun onInstallPendingUserAction(packageName: String, statusIntent: Intent) {
+        logcat { "onInstallPendingUserAction $packageName" }
+        // We update the library to set this app as being installed
+        onInstalling(packageName)
+
+        runBlocking {
+            addPendingUserAction(packageName, statusIntent)
+        }
+
+        // We display a notification if the app isn't resumed
         if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
             notifyPendingUserActions()
         }
