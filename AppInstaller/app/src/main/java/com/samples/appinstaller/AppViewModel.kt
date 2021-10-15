@@ -38,7 +38,7 @@ class AppViewModel @Inject constructor(
     fun canInstallPackages() = installer.canInstallPackages()
 
     val apps = library.apps
-    val pendingUserActionEvents = installer.pendingUserActionEvents
+    val pendingUserActionEvents = installer.pendingUserActionEvents2
     val appSettings = settings.appSettings.data.stateIn(
         viewModelScope,
         SharingStarted.Lazily,

@@ -32,6 +32,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.samples.appinstaller.store.LibraryRepository
+import com.samples.appinstaller.store.PackageName
 import com.samples.appinstaller.workers.InstallWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -60,19 +61,42 @@ class PackageInstallerRepository @Inject constructor(
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
 
-    private val _pendingUserActions: Queue<Intent> = LinkedList()
-    private val _pendingUserActionEvents = MutableSharedFlow<Intent>()
-    val pendingUserActionEvents: SharedFlow<Intent> = _pendingUserActionEvents
+    @Deprecated("done")
+    private val _pendingUserActions2: Queue<Intent> = LinkedList()
+    @Deprecated("done")
+    private val _pendingUserActionEvents2 = MutableSharedFlow<Intent>()
+    @Deprecated("done")
+    val pendingUserActionEvents2: SharedFlow<Intent> = _pendingUserActionEvents2
 
-    private fun addPendingUserAction(packageName: String, intent: Intent) {
-        _pendingUserActions.add(intent)
+    private fun addPendingUserAction2(packageName: String, intent: Intent) {
+        _pendingUserActions2.add(intent)
         runBlocking {
-            _pendingUserActionEvents.emit(intent)
+            _pendingUserActionEvents2.emit(intent)
         }
     }
 
     fun removePendingUserAction(packageName: String, intent: Intent) {
-        _pendingUserActions.remove(intent)
+        _pendingUserActions2.remove(intent)
+    }
+
+    /**
+     * Keep track of the pending user actions per package name, which forces only one action to be
+     * saved.
+     */
+    private val _pendingUserActions = mutableMapOf<PackageName, PendingUserAction>()
+
+    /**
+     * Keep track
+     */
+    private val _pendingUserActionsQueue: Queue<PackageName> = LinkedList()
+
+    private fun addPendingUserAction(packageName: PackageName, type: UserActionType, intent: Intent) {
+        _pendingUserActions[packageName] = PendingUserAction(packageName, type, System.currentTimeMillis())
+        _pendingUserActionsQueue.add(packageName)
+
+        runBlocking {
+            _pendingUserActionEvents2.emit(intent)
+        }
     }
 
     /**
@@ -285,11 +309,11 @@ class PackageInstallerRepository @Inject constructor(
     }
 
     fun getPendingUserAction(): Intent? {
-        return _pendingUserActions.peek()
+        return _pendingUserActions2.peek()
     }
 
     fun removePendingUserAction(): Intent? {
-        return _pendingUserActions.remove()
+        return _pendingUserActions2.remove()
     }
 
     suspend fun redeliverPendingUserActions() {
@@ -327,7 +351,7 @@ class PackageInstallerRepository @Inject constructor(
         onInstalling(packageName)
 
         runBlocking {
-            addPendingUserAction(packageName, statusIntent)
+            addPendingUserAction2(packageName, statusIntent)
         }
 
         // We save the pending user action to deliver it later to the user if the action isn't
@@ -346,7 +370,7 @@ class PackageInstallerRepository @Inject constructor(
         onInstalling(packageName)
 
         runBlocking {
-            addPendingUserAction(packageName, statusIntent)
+            addPendingUserAction2(packageName, statusIntent)
         }
 
         // We display a notification if the app isn't resumed
@@ -360,16 +384,16 @@ class PackageInstallerRepository @Inject constructor(
         // We update the library to set this app as being uninstalled
         library.addUninstall(packageName)
         // We save the pending user action to deliver it to the user
-        _pendingUserActions.add(statusIntent)
+        _pendingUserActions2.add(statusIntent)
 
         runBlocking {
-            _pendingUserActionEvents.emit(statusIntent)
+            _pendingUserActionEvents2.emit(statusIntent)
         }
     }
 
     fun notifyPendingUserActions() {
-        logcat { "pendingUserActions: ${_pendingUserActions.size}" }
-        if (_pendingUserActions.size > 0) {
+        logcat { "pendingUserActions: ${_pendingUserActions2.size}" }
+        if (_pendingUserActions2.size > 0) {
             notificationRepository.createInstallNotification()
         }
     }
@@ -380,8 +404,8 @@ class PackageInstallerRepository @Inject constructor(
 
     fun requestUserActionIfNeeded() {
         runBlocking {
-            _pendingUserActions.peek()?.let { intent ->
-                _pendingUserActionEvents.emit(intent)
+            _pendingUserActions2.peek()?.let { intent ->
+                _pendingUserActionEvents2.emit(intent)
             }
         }
     }
@@ -420,3 +444,7 @@ class PackageInstallerRepository @Inject constructor(
         cancelStatusPendingIntent(packageName)
     }
 }
+
+
+enum class UserActionType { INSTALL, UNINSTALL, UPGRADE }
+class PendingUserAction(val packageName: PackageName, val type: UserActionType, val creationTime: Long)

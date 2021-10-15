@@ -17,6 +17,9 @@ package com.samples.appinstaller.store
 
 import androidx.annotation.DrawableRes
 
+// TODO: Update type across the project
+typealias PackageName = String
+
 data class AppPackage(
     val packageName: String,
     val label: String,
