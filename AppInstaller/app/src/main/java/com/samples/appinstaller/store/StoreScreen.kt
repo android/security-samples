@@ -45,7 +45,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -65,7 +67,9 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
         }
     }
 
-    val apps by viewModel.apps.collectAsState()
+    val appsMap by viewModel.apps.collectAsState(sortedMapOf())
+
+    val apps by remember(appsMap) { derivedStateOf { appsMap.values.toList() } }
 
     fun install(app: AppPackage) = viewModel.installApp(app.packageName)
     fun upgrade(app: AppPackage) = viewModel.installApp(app.packageName)

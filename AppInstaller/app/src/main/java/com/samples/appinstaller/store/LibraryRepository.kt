@@ -17,14 +17,22 @@ package com.samples.appinstaller.store
 
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.compose.runtime.MutableState
+import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.R
-import com.samples.appinstaller.SessionStatusReceiver
+import com.samples.appinstaller.settings.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import logcat.logcat
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +40,7 @@ import javax.inject.Singleton
  * This list contains the apps available in our store. In a production app, this list would be
  * fetched from a remote server as it may be updated and not be static like here
  */
-private val internalStoreAppsList = listOf(
+private val internalStoreApps = listOf(
     AppPackage(
         packageName = "com.acme.spaceshooter",
         label = "Space Shooter",
@@ -57,7 +65,7 @@ private val internalStoreAppsList = listOf(
         company = "PACA SARL",
         icon = R.drawable.ic_app_nicekart_foreground,
     ),
-)
+).associateBy { it.packageName }.toSortedMap()
 
 /**
  * This repository contains the list of the store apps and their status on the current device
@@ -66,34 +74,46 @@ private val internalStoreAppsList = listOf(
  * memory
  */
 @Singleton
-class LibraryRepository @Inject constructor(@ApplicationContext private val context: Context) {
+class LibraryRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    settings: SettingsRepository
+) {
     companion object {
-        val storeApps = internalStoreAppsList
+        val storeApps = internalStoreApps
     }
 
     private val packageManager: PackageManager
         get() = context.packageManager
 
     private val _apps = MutableStateFlow(storeApps)
-    val apps: StateFlow<List<AppPackage>> = _apps
-
     /**
-     * Set containing list of package names being installed or upgraded
+     * We combine our store apps list and the installed apps (filtered from apps not being
+     * in our store) with the apps being installed or upgraded to get the most up-to-date
+     * library state
      */
-    private val appsBeingInstalled = mutableSetOf<String>()
+    val apps = _apps.combine(settings.appSettings.data) { currentApps, settings ->
 
-    /**
-     * Find app by package name in the store apps list
-     */
-    private fun findApp(packageName: String): AppPackage? {
-        return _apps.value.find { it.packageName == packageName }
+        currentApps.mapValues {
+            val packageName = it.key
+            val app = it.value
+
+            when(settings.packageActionsMap[packageName]?.packageActionType) {
+                AppSettings.PackageActionType.INSTALLING -> app.copy(status = AppStatus.INSTALLING)
+                AppSettings.PackageActionType.UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
+                AppSettings.PackageActionType.UPGRADING -> app.copy(status = AppStatus.UPGRADING)
+                AppSettings.PackageActionType.PENDING_USER_INSTALLING -> app.copy(status = AppStatus.INSTALLING)
+                AppSettings.PackageActionType.PENDING_USER_UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
+                AppSettings.PackageActionType.PENDING_USER_UPGRADING -> app.copy(status = AppStatus.UPGRADING)
+                AppSettings.PackageActionType.UNRECOGNIZED,
+                null -> app
+            }
+        }.toSortedMap()
     }
 
-    /**
-     * Find app by package name in the store apps list
-     */
-    fun containsApp(packageName: String): Boolean {
-        return findApp(packageName) != null
+    init {
+        runBlocking {
+            _apps.emit(storeApps)
+        }
     }
 
     /**
@@ -102,127 +122,27 @@ class LibraryRepository @Inject constructor(@ApplicationContext private val cont
      */
     suspend fun loadLibrary() {
         withContext(Dispatchers.IO) {
-            val installedPackages = packageManager.getInstalledPackages(0)
-
-            val storeApps = storeApps
-            val installedStoreApps = installedPackages.mapNotNull { installedPackage ->
-                findApp(installedPackage.packageName)?.copy(
-                    status = AppStatus.INSTALLED,
-                    updatedAt = installedPackage.lastUpdateTime
-                )
-            }
+            val installedPackages = packageManager.getInstalledPackages(0).associateBy { it.packageName }
 
             /**
              * We combine our store apps list and the installed apps (filtered from apps not being
-             * in our store) with the apps being installed or upgraded to get the most up-to-date
-             * library state
+             * in our store)
              */
-            _apps.value = (installedStoreApps + storeApps).distinctBy { it.packageName }.map { app ->
-                if (appsBeingInstalled.contains(app.packageName)) {
+            val updatedApps = storeApps.mapValues {
+                val packageName = it.key
+                val app = it.value
+
+                if(installedPackages[packageName] != null) {
                     app.copy(
-                        status = if (app.status == AppStatus.INSTALLED) {
-                            AppStatus.UPGRADING
-                        } else {
-                            AppStatus.INSTALLING
-                        }
+                        status = AppStatus.INSTALLED,
+                        updatedAt = installedPackages[packageName]!!.lastUpdateTime
                     )
                 } else {
                     app
                 }
-            }.sortedBy {
-                it.label
-            }
-        }
-    }
+            }.toSortedMap()
 
-    private fun setAppState(packageName: String, transform: (app: AppPackage) -> AppPackage) {
-        _apps.value = _apps.value.map { app ->
-            if (app.packageName == packageName) transform(app) else app
-        }.sortedBy {
-            it.label
-        }
-    }
-
-    /**
-     * We update our library to mark an app as being installed or upgraded
-     */
-    fun addInstall(packageName: String) {
-        appsBeingInstalled.add(packageName)
-        logcat { "$packageName is being installed or upgraded" }
-
-        setAppState(packageName) { app ->
-            app.copy(
-                status = if (app.status == AppStatus.INSTALLED) {
-                    AppStatus.UPGRADING
-                } else {
-                    AppStatus.INSTALLING
-                }
-            )
-        }
-    }
-
-    /**
-     * We update our library to mark an app as installed
-     */
-    fun completeInstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        logcat { "$packageName has been installed or upgraded" }
-
-        setAppState(packageName) { app ->
-            app.copy(status = AppStatus.INSTALLED, updatedAt = System.currentTimeMillis())
-        }
-    }
-
-    /**
-     * We update our library to mark an app as being uninstalled
-     */
-    fun addUninstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        logcat { "$packageName is being uninstalled" }
-
-        setAppState(packageName) { app ->
-            app.copy(status = AppStatus.UNINSTALLING)
-        }
-    }
-
-    /**
-     * We update our library to mark an app uninstalled
-     */
-    fun completeUninstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        logcat { "$packageName has been uninstalled" }
-
-        setAppState(packageName) { app ->
-            app.copy(status = AppStatus.UNINSTALLED, updatedAt = -1)
-        }
-    }
-
-    /**
-     * We update our library to revert the state of an app due to a install/upgrade cancellation
-     */
-    fun cancelInstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        logcat { "$packageName install been cancelled" }
-
-        /**
-         * We update the library to set this app as [AppStatus.UNINSTALLED] if it's a
-         * [SessionStatusReceiver.INSTALL_ACTION] session otherwise [AppStatus.INSTALLED] if it's a
-         * [SessionStatusReceiver.UPGRADE_ACTION]
-         */
-        setAppState(packageName) { app ->
-            app.copy(status = if (app.updatedAt > -1) AppStatus.INSTALLED else AppStatus.UNINSTALLED)
-        }
-    }
-
-    /**
-     * We update our library to revert the state of an app due to a uninstall failure/cancellation
-     */
-    fun cancelUninstall(packageName: String) {
-        appsBeingInstalled.remove(packageName)
-        logcat { "$packageName uninstall been cancelled" }
-
-        setAppState(packageName) { app ->
-            app.copy(status = AppStatus.INSTALLED)
+            _apps.emit(updatedApps)
         }
     }
 }

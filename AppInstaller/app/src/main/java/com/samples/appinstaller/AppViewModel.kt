@@ -15,15 +15,20 @@
  */
 package com.samples.appinstaller
 
+import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.samples.appinstaller.installer.PackageInstallerRepository
+import com.samples.appinstaller.installer.SessionActionObserver
 import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.LibraryRepository
+import com.samples.appinstaller.store.PackageName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import logcat.logcat
@@ -38,12 +43,14 @@ class AppViewModel @Inject constructor(
     fun canInstallPackages() = installer.canInstallPackages()
 
     val apps = library.apps
-    val pendingUserActionEvents = installer.pendingUserActionEvents2
     val appSettings = settings.appSettings.data.stateIn(
         viewModelScope,
         SharingStarted.Lazily,
         AppSettings.getDefaultInstance()
     )
+
+    val pendingUserActionEvents = settings.getPendingUserActions()
+    fun getPendingIntent(packageName: PackageName) = installer.getCachedStatusPendingIntent(packageName)
 
     private var sessionActionObserver: SessionActionObserver? = null
 
@@ -56,6 +63,13 @@ class AppViewModel @Inject constructor(
      */
     init {
         refreshLibrary()
+    }
+
+    // TODO: Clean before committing
+    fun trigger(context: Context) {
+        context.packageManager.packageInstaller.mySessions.forEach {
+            context.packageManager.packageInstaller.abandonSession(it.sessionId)
+        }
     }
 
     /**
@@ -91,19 +105,15 @@ class AppViewModel @Inject constructor(
     fun cancelInstallNotification() = installer.cancelInstallNotification()
 
     fun notifyPendingUserActions() = installer.notifyPendingUserActions()
-    fun requestUserActionIfNeeded() = installer.requestUserActionIfNeeded()
 
     fun getPendingUserAction() = installer.getPendingUserAction()
-    fun redeliverPendingUserActions() = viewModelScope.launch {
-        installer.redeliverPendingUserActions()
-    }
 
     /**
      * When we launch a user action intent, we monitor its related session ID for updates
      */
-    fun initSessionActionObserver(sessionId: Int) {
-        logcat { "initSessionActionObserver $sessionId" }
-        sessionActionObserver = installer.createSessionActionObserver(sessionId)
+    fun initSessionActionObserver(packageName: PackageName, sessionId: Int) {
+        logcat { "initSessionActionObserver $packageName ($sessionId)" }
+        sessionActionObserver = installer.createSessionActionObserver(packageName, sessionId)
     }
 
     /**
@@ -131,7 +141,7 @@ class AppViewModel @Inject constructor(
     /**
      * Trigger an app install
      */
-    fun installApp(packageName: String) {
+    fun installApp(packageName: PackageName) {
         // We initialize an install session
         installer.installApp(packageName)
     }
@@ -139,27 +149,21 @@ class AppViewModel @Inject constructor(
     /**
      * Cancel ongoing app install
      */
-    fun cancelInstall(packageName: String) {
-        viewModelScope.launch {
-            // We cancel all running install sessions related to this app
-            installer.cancelInstall(packageName)
-        }
-    }
+    fun cancelInstall(packageName: PackageName) = installer.cancelInstall(packageName)
 
     /**
      * Trigger an app uninstall
      */
-    fun uninstallApp(packageName: String) {
+    fun uninstallApp(packageName: PackageName) {
         installer.uninstallApp(packageName)
     }
 
     /**
      * Get app launching intent and send it to [MainActivity] to be launched
      */
-    fun openApp(packageName: String) {
+    fun openApp(packageName: PackageName) {
         viewModelScope.launch {
-            installer.getAppLaunchingIntent(packageName)
-                ?.let { _appsToBeOpened.emit(it) }
+            installer.getAppLaunchingIntent(packageName)?.let { _appsToBeOpened.emit(it) }
         }
     }
 }

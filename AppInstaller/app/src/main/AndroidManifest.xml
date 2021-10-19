@@ -56,7 +56,7 @@
             tools:node="remove" />
 
         <receiver
-            android:name=".SessionStatusReceiver"
+            android:name=".installer.SessionStatusReceiver"
             android:exported="false" />
 
     </application>

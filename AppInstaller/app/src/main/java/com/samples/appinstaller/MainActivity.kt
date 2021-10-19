@@ -24,6 +24,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.samples.appinstaller.store.PackageName
 import com.samples.appinstaller.ui.theme.AppInstallerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -36,6 +37,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // TODO: Clean before committing
+        lifecycleScope.launch {
+//            viewModel.trigger(this@MainActivity)
+        }
 
         /**
          * We remove the notification if it exists as user actions will be shown inside the app
@@ -52,7 +58,7 @@ class MainActivity : ComponentActivity() {
          */
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                viewModel.pendingUserActionEvents.collect(::onPendingUserAction)
+                viewModel.pendingUserActionEvents.collect(::onPendingUserActions)
             }
         }
 
@@ -63,16 +69,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 viewModel.appsToBeOpened.collect(::startActivity)
-            }
-        }
-
-        /**
-         * We redeliver pending status intents that were cached in case the user hasn't confirmed
-         * them yet
-         */
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
-                viewModel.redeliverPendingUserActions()
             }
         }
 
@@ -101,7 +97,6 @@ class MainActivity : ComponentActivity() {
         super.onResume()
 
         viewModel.markUserActionComplete()
-        viewModel.requestUserActionIfNeeded()
     }
 
     /**
@@ -130,6 +125,19 @@ class MainActivity : ComponentActivity() {
             viewModel.initSessionActionObserver(sessionId)
 
             startActivity(intent.getParcelableExtra(Intent.EXTRA_INTENT))
+        }
+    }
+
+    private fun onPendingUserActions(pendingUserActions: Map<PackageName, AppSettings.PackageAction>) {
+        logcat { "onPendingUserActions: $packageName" }
+
+        pendingUserActions.values.minByOrNull { it.creationTime }?.let { action ->
+            viewModel.getPendingIntent(action.packageName)?.let { pendingIntent ->
+                val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
+                viewModel.initSessionActionObserver(packageName, sessionId)
+
+                startActivity(pendingIntent)
+            }
         }
     }
 }

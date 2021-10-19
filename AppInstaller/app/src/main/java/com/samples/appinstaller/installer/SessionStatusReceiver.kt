@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.samples.appinstaller
+package com.samples.appinstaller.installer
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -31,7 +31,9 @@ class SessionStatusReceiver : BroadcastReceiver() {
         const val UPGRADE_ACTION = "upgrade_action"
         const val UNINSTALL_ACTION = "uninstall_action"
         const val REDELIVER_ACTION = "redeliver_action"
-        const val EXTRA_REDELIVER = "is_redelivered"
+
+        const val EXTRA_REDELIVER = "extra_redelivered"
+        const val EXTRA_CREATION_TIME = "extra_creation_time"
     }
 
     @Inject
@@ -48,9 +50,16 @@ class SessionStatusReceiver : BroadcastReceiver() {
         /**
          * Redelivered intents are cached intents that the user hasn't interacted yet with
          */
-        if (isRedelivered && status < 0) {
-            logcat { "This is a redelivery" }
-            return installer.onInstallPendingUserAction(packageName, intent)
+//        if (isRedelivered && status < 0) {
+        if (isRedelivered) {
+            logcat { "This is a redelivery for $packageName" }
+//
+//            if(installer.isPendingUserActionObsolete(packageName, creationTime)) {
+//                logcat { "Redelivery is cancelled for $packageName" }
+//            } else {
+//                logcat { "Redelivery is done for $packageName" }
+//                return installer.onInstallPendingUserAction(packageName, intent)
+//            }
         }
 
         logcat {
@@ -64,8 +73,10 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 when (action) {
                     INSTALL_ACTION -> {
-                        installer.saveStatusPendingIntentForLater(intent)
-                        installer.onInstallPendingUserAction(packageName, intent)
+                        if(installer.isSessionValid(packageName, sessionId)) {
+                            installer.saveStatusPendingIntentForLater(intent)
+//                            installer.onInstallPendingUserAction(packageName, intent)
+                        }
                     }
                     UNINSTALL_ACTION -> {
                         installer.onUninstallPendingUserAction(packageName, intent)
@@ -79,10 +90,10 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> {
                 when (action) {
                     INSTALL_ACTION -> {
-                        installer.onInstallSuccess(packageName)
+                        installer.completeAction("onInstallSuccess", packageName)
                     }
                     UNINSTALL_ACTION -> {
-                        installer.onUninstallSuccess(packageName)
+                        installer.completeAction("onUninstallSuccess", packageName)
                     }
                     else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
@@ -98,15 +109,17 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE_INVALID,
             PackageInstaller.STATUS_FAILURE_STORAGE -> {
                 when (action) {
-                    INSTALL_ACTION,
-                    UNINSTALL_ACTION -> {
-                        installer.onInstallFailure(packageName)
+                    INSTALL_ACTION -> {
+                        installer.completeAction("onInstallFailure", packageName)
                     }
-                    else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
+                    UNINSTALL_ACTION -> {
+                        installer.completeAction("onUninstallFailure", packageName)
+                    }
+                    else -> logcat(LogPriority.ERROR) { "Unhandled failure status: $status" }
                 }
             }
-            // TODO: Remove branch (too many logs) and add intent filter in manifest
-            else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
+
+            else -> logcat(LogPriority.ERROR) { "Unknown status: $status" }
         }
     }
 

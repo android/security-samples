@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.samples.appinstaller
+package com.samples.appinstaller.installer
 
 import android.content.pm.PackageInstaller
 import android.os.Handler
+import com.samples.appinstaller.store.PackageName
 import logcat.LogPriority
 import logcat.logcat
 import java.lang.Exception
@@ -27,6 +28,7 @@ import java.lang.Exception
  */
 class SessionActionObserver(
     private val packageInstaller: PackageInstaller,
+    val packageName: PackageName,
     val trackedSessionId: Int
 ) : PackageInstaller.SessionCallback() {
 
@@ -38,10 +40,10 @@ class SessionActionObserver(
     private val handler: Handler = Handler()
 
     init {
-        packageInstaller.registerSessionCallback(this)
+        observe()
     }
 
-    fun observe() {
+    private fun observe() {
         packageInstaller.registerSessionCallback(this)
     }
 

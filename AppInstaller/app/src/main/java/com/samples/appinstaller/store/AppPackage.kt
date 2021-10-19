@@ -21,7 +21,7 @@ import androidx.annotation.DrawableRes
 typealias PackageName = String
 
 data class AppPackage(
-    val packageName: String,
+    val packageName: PackageName,
     val label: String,
     val company: String,
     @DrawableRes val icon: Int,

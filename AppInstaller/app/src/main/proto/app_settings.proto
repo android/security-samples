@@ -37,6 +37,23 @@ message AppSettings {
     AFTER_60_MINUTES = 5;
   }
 
+  enum PackageActionType {
+    INSTALLING = 0;
+    UNINSTALLING = 1;
+    UPGRADING = 2;
+    PENDING_USER_INSTALLING = 3;
+    PENDING_USER_UNINSTALLING = 4;
+    PENDING_USER_UPGRADING = 5;
+  }
+
+  message PackageAction {
+    string packageName = 1;
+    int32 sessionId = 2;
+    PackageActionType packageActionType = 3;
+    int64 creationTime = 4;
+  }
+
   AutoUpdateSchedule autoUpdateSchedule = 1;
   UpdateAvailabilityPeriod updateAvailabilityPeriod = 2;
+  map<string, PackageAction> packageActions = 3;
 }

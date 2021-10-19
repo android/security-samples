@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.samples.appinstaller.workers
+package com.samples.appinstaller.installer
 
 import android.content.Context
 import android.content.pm.PackageInstaller
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.samples.appinstaller.PackageInstallerRepository
+import com.samples.appinstaller.AppSettings
+import com.samples.appinstaller.settings.SettingsRepository
+import com.samples.appinstaller.store.PackageName
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -28,13 +30,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import logcat.logcat
-import java.io.IOException
 
 @HiltWorker
 class InstallWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val installer: PackageInstallerRepository,
+    private val settings: SettingsRepository
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -47,14 +49,23 @@ class InstallWorker @AssistedInject constructor(
         val packageName = inputData.getString(PACKAGE_NAME_KEY)
             ?: return@coroutineScope Result.failure()
 
-        // We verify if the provided package name is part of our store apps
-        if (!installer.isAppInstallable(packageName)) return@coroutineScope Result.failure()
-
         try {
             logcat { "Installing: $packageName" }
-            // We ask PackageInstaller to create an install sesssion
-            val session = installer.createInstallSession(packageName)
+            // We ask PackageInstaller to create an install session
+            val sessionId = installer.createInstallSession(packageName)
                 ?: return@coroutineScope Result.failure()
+
+            val session = installer.openInstallSession(sessionId)
+
+            val sessionInfo = installer.getSessionInfo(sessionId)
+                ?: return@coroutineScope Result.failure()
+
+            settings.addPackageAction(
+                packageName,
+                AppSettings.PackageActionType.INSTALLING,
+                sessionInfo.createdMillis,
+                sessionId
+            )
 
             // We simulate a delay as installers would probably download first the APK from a remote
             // server and write the APK bytes in the system afterwards
@@ -72,11 +83,9 @@ class InstallWorker @AssistedInject constructor(
             logcat { "Committing session for $packageName" }
             val pendingIntent = installer.createStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             e.printStackTrace()
-            return@coroutineScope Result.failure()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
+            settings.removePackageAction(packageName)
             return@coroutineScope Result.failure()
         }
 
@@ -86,7 +95,10 @@ class InstallWorker @AssistedInject constructor(
     /**
      * Save APK in the provided session
      */
-    private suspend fun writeApkToSession(packageName: String, session: PackageInstaller.Session) {
+    private suspend fun writeApkToSession(
+        packageName: PackageName,
+        session: PackageInstaller.Session
+    ) {
         withContext(Dispatchers.IO) {
             // We open the apk from our assets folder and save it to the OutputStream provided by
             // PackageInstaller to install that app
