@@ -153,4 +153,13 @@ class LibraryRepository @Inject constructor(
             _apps.emit(updatedApps)
         }
     }
+
+    private fun getPackageInstallTime(packageName: PackageName): Long {
+        return try {
+            val info = packageManager.getPackageInfo(packageName, 0)
+            info.lastUpdateTime
+        } catch (e: PackageManager.NameNotFoundException) {
+            -1
+        }
+    }
 }
