@@ -66,11 +66,15 @@ class AppViewModel @Inject constructor(
         refreshLibrary()
     }
 
-    // TODO: Clean before committing
-    fun trigger(context: Context) {
+    /**
+     * TODO: Remove for final commit push
+     * Clean existing install sessions
+     */
+    fun cleanWorkspace(context: Context) {
         context.packageManager.packageInstaller.mySessions.forEach {
             context.packageManager.packageInstaller.abandonSession(it.sessionId)
         }
+
     }
 
     /**

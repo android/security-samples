@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
          * Clean existing install sessions
          */
         lifecycleScope.launch {
-            viewModel.trigger(this@MainActivity)
+            viewModel.cleanWorkspace(this@MainActivity)
         }
 
         /**
