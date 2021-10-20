@@ -17,22 +17,15 @@ package com.samples.appinstaller.store
 
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.compose.runtime.MutableState
 import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.R
 import com.samples.appinstaller.settings.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import logcat.logcat
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -97,7 +90,7 @@ class LibraryRepository @Inject constructor(
             val packageName = it.key
             val app = it.value
 
-            when(settings.packageActionsMap[packageName]?.packageActionType) {
+            when (settings.packageActionsMap[packageName]?.packageActionType) {
                 AppSettings.PackageActionType.INSTALLING -> app.copy(status = AppStatus.INSTALLING)
                 AppSettings.PackageActionType.UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
                 AppSettings.PackageActionType.UPGRADING -> app.copy(status = AppStatus.UPGRADING)
@@ -108,7 +101,7 @@ class LibraryRepository @Inject constructor(
                 null -> {
                     val installTime = getPackageInstallTime(app.packageName)
 
-                    if(installTime > -1) {
+                    if (installTime > -1) {
                         app.copy(status = AppStatus.INSTALLED, updatedAt = installTime)
                     } else {
                         app
@@ -140,7 +133,7 @@ class LibraryRepository @Inject constructor(
                 val packageName = it.key
                 val app = it.value
 
-                if(installedPackages[packageName] != null) {
+                if (installedPackages[packageName] != null) {
                     app.copy(
                         status = AppStatus.INSTALLED,
                         updatedAt = installedPackages[packageName]!!.lastUpdateTime
