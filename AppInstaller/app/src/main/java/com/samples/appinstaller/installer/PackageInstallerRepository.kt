@@ -16,7 +16,6 @@
 package com.samples.appinstaller.installer
 
 import android.app.PendingIntent
-import android.app.PendingIntent.CanceledException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
@@ -34,25 +33,24 @@ import androidx.work.workDataOf
 import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.NotificationRepository
 import com.samples.appinstaller.settings.SettingsRepository
-import com.samples.appinstaller.store.LibraryRepository
 import com.samples.appinstaller.store.PackageName
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 import java.io.IOException
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class PackageInstallerRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val library: LibraryRepository,
     private val notificationRepository: NotificationRepository,
     private val settings: SettingsRepository
 ) {
@@ -62,17 +60,60 @@ class PackageInstallerRepository @Inject constructor(
     private val packageInstaller: PackageInstaller
         get() = context.packageManager.packageInstaller
 
-
     /**
      * Keep track of the pending user action per package name
      */
-    private val pendingUserActions = mutableMapOf<PackageName, Intent>()
+    private val pendingUserActionQueue: Queue<Intent> = LinkedList()
+    private val _pendingUserActionEvents = MutableSharedFlow<Unit>()
+    val pendingUserActionEvents: SharedFlow<Unit> = _pendingUserActionEvents
 
     /**
      * Add an item to the pending user actions queue
      */
     private fun enqueuePendingUserAction(packageName: PackageName, statusIntent: Intent) {
-        pendingUserActions[packageName] = statusIntent
+        logcat { "enqueue pending user action for $packageName" }
+        runBlocking {
+            pendingUserActionQueue.add(statusIntent)
+            _pendingUserActionEvents.emit(Unit)
+        }
+    }
+
+    /**
+     * Get the first pending user action from the queue
+     */
+    fun getPendingUserActionFromQueue(): Intent? {
+        return pendingUserActionQueue.peek()
+    }
+
+    /**
+     * Get the first pending user action from the queue
+     */
+    fun removePendingUserActionFromQueue() {
+        pendingUserActionQueue.poll()
+    }
+
+    /**
+     * Add saved pending intents to the [pendingUserActionQueue]
+     */
+    fun redeliverSavedUserActions() {
+        runBlocking {
+            settings.getPendingUserActions().first().values.forEach {
+                getCachedStatusPendingIntent(it.packageName)?.let { pendingIntent ->
+                    try {
+                        pendingIntent.send(
+                            context,
+                            0,
+                            Intent(SessionStatusReceiver.REDELIVER_ACTION)
+                        )
+
+                        logcat { "Redelivered status intent for ${it.packageName}" }
+                    } catch (ignored: PendingIntent.CanceledException) {
+                        logcat(LogPriority.ERROR) { ignored.asLog() }
+                        settings.removePackageAction(it.packageName)
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -98,14 +139,13 @@ class PackageInstallerRepository @Inject constructor(
     fun uninstallApp(packageName: PackageName) {
         /**
          * We request an uninstallation from [PackageInstaller] and provides a pending intent that
-         * will be send back to our app via [com.samples.appinstaller.SessionStatusReceiver] after
-         * the uninstallation has started
+         * will be send back to our app via [com.samples.appinstaller.installer.SessionStatusReceiver]
+         * after the uninstallation has started
          */
         val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
             action = SessionStatusReceiver.UNINSTALL_ACTION
             data = Uri.fromParts("package", packageName, null)
         }
-
 
         runBlocking {
             val statusPendingIntent =
@@ -267,50 +307,12 @@ class PackageInstallerRepository @Inject constructor(
         getCachedStatusPendingIntent(packageName)?.cancel()
     }
 
-    fun getPendingUserAction(): Intent? {
-        return null
-//        return _pendingUserActions[packageName]?.statusIntent
-    }
-
-    fun removePendingUserAction() {
-//        _pendingUserActions.remove(packageName)
-    }
-
-//    suspend fun redeliverPendingUserActionsOld() {
-//        withContext(Dispatchers.IO) {
-//            packageInstaller.mySessions
-//                .filter { sessionInfo ->
-//                    val packageName = sessionInfo.appPackageName ?: return@filter false
-//                    library.containsApp(packageName)
-//                }
-//                .sortedByDescending { sessionInfo -> sessionInfo.createdMillis }
-//                .distinctBy { sessionInfo -> sessionInfo.appPackageName }
-//                .mapNotNull { sessionInfo -> sessionInfo.appPackageName }
-//                .also { sessions -> logcat { "Redeliver pending user actions (${sessions.size} unique sessions found)" } }
-//                .forEach { packageName ->
-//                    getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
-//                        try {
-//                            pendingIntent.send(
-//                                context,
-//                                0,
-//                                Intent(SessionStatusReceiver.REDELIVER_ACTION)
-//                            )
-//
-//                            logcat { "Redelivered status intent for $packageName" }
-//                        } catch (ignored: CanceledException) {
-//                            logcat(LogPriority.ERROR) { ignored.asLog() }
-//                        }
-//                    }
-//                }
-//        }
-//    }
-
     fun isSessionValid(packageName: PackageName, sessionId: Int): Boolean {
         return runBlocking {
             val savedPackageAction = settings.getPackageAction(packageName)
 
-            if(savedPackageAction != null) {
-                if(savedPackageAction.sessionId == sessionId) {
+            if (savedPackageAction != null) {
+                if (savedPackageAction.sessionId == sessionId) {
                     return@runBlocking true
                 } else {
                     logcat(LogPriority.ERROR) {
@@ -327,38 +329,10 @@ class PackageInstallerRepository @Inject constructor(
         }
     }
 
-//    fun redeliverInstallPendingUserAction(packageName: PackageName) {
-//        val cachedPendingIntent = getCachedStatusPendingIntent(packageName)
-//
-//        if (cachedPendingIntent == null) {
-//            completeAction("redeliverInstallPendingUserAction Failure", packageName)
-//            return
-//        } else {
-//            val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
-//            viewModel.initSessionActionObserver(packageName, sessionId)
-//
-//            startActivity(pendingIntent)
-//        }
-//
-//        getCachedStatusPendingIntent(packageName)?.let { pendingIntent ->
-//            val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
-//            viewModel.initSessionActionObserver(packageName, sessionId)
-//
-//            startActivity(pendingIntent)
-//        }
-//    }
-
     fun onInstallPendingUserAction(packageName: PackageName, statusIntent: Intent) {
         logcat { "onInstallPendingUserAction $packageName" }
 
-//        runBlocking {
-//            enqueuePendingUserAction(packageName, statusIntent)
-//            pendingUserActions[packageName] = statusIntent
-//            settings.updatePackageAction(
-//                packageName,
-//                AppSettings.PackageActionType.PENDING_USER_INSTALLING
-//            )
-//        }
+        enqueuePendingUserAction(packageName, statusIntent)
 
         // We display a notification if the app isn't resumed
         if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
@@ -368,14 +342,8 @@ class PackageInstallerRepository @Inject constructor(
 
     fun onUninstallPendingUserAction(packageName: PackageName, statusIntent: Intent) {
         logcat { "onUninstallPendingUserAction $packageName" }
-        // We update the library to set this app as being uninstalled
-//        library.addUninstall(packageName)
-        // We save the pending user action to deliver it to the user
-//        _pendingUserActions2.add(statusIntent)
 
-        runBlocking {
-//            _pendingUserActionEvents2.emit(statusIntent)
-        }
+        enqueuePendingUserAction(packageName, statusIntent)
     }
 
     fun notifyPendingUserActions() {

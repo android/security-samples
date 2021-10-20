@@ -28,7 +28,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import logcat.logcat
@@ -49,8 +48,10 @@ class AppViewModel @Inject constructor(
         AppSettings.getDefaultInstance()
     )
 
-    val pendingUserActionEvents = settings.getPendingUserActions()
-    fun getPendingIntent(packageName: PackageName) = installer.getCachedStatusPendingIntent(packageName)
+    val pendingUserActionEvents = installer.pendingUserActionEvents
+    fun redeliverSavedUserActions() = installer.redeliverSavedUserActions()
+    fun getPendingUserActionFromQueue() = installer.getPendingUserActionFromQueue()
+    private fun removePendingUserActionFromQueue() = installer.removePendingUserActionFromQueue()
 
     private var sessionActionObserver: SessionActionObserver? = null
 
@@ -103,10 +104,7 @@ class AppViewModel @Inject constructor(
     }
 
     fun cancelInstallNotification() = installer.cancelInstallNotification()
-
     fun notifyPendingUserActions() = installer.notifyPendingUserActions()
-
-    fun getPendingUserAction() = installer.getPendingUserAction()
 
     /**
      * When we launch a user action intent, we monitor its related session ID for updates
@@ -123,7 +121,7 @@ class AppViewModel @Inject constructor(
     fun markUserActionComplete() {
         logcat { "markUserActionComplete ${sessionActionObserver?.trackedSessionId}" }
         if (sessionActionObserver != null) {
-            installer.removePendingUserAction()
+            removePendingUserActionFromQueue()
             sessionActionObserver?.startCancellationTimeout()
             sessionActionObserver = null
         }
@@ -139,10 +137,9 @@ class AppViewModel @Inject constructor(
     }
 
     /**
-     * Trigger an app install
+     * Trigger an app install by initializing an install session
      */
     fun installApp(packageName: PackageName) {
-        // We initialize an install session
         installer.installApp(packageName)
     }
 

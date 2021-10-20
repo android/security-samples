@@ -101,10 +101,6 @@ class SettingsRepository @Inject constructor(
         return context.appSettings.data.first().packageActionsMap[packageName]
     }
 
-    suspend fun getOldestPackageAction(): AppSettings.PackageAction? {
-        return context.appSettings.data.first().packageActionsMap.values.minByOrNull { it.creationTime }
-    }
-
     fun getPendingUserActions(): Flow<Map<String, AppSettings.PackageAction>> {
         return context.appSettings.data.map { settings ->
             settings.packageActionsMap.filterValues { action ->

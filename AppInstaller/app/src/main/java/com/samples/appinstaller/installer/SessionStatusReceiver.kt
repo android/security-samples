@@ -33,7 +33,6 @@ class SessionStatusReceiver : BroadcastReceiver() {
         const val REDELIVER_ACTION = "redeliver_action"
 
         const val EXTRA_REDELIVER = "extra_redelivered"
-        const val EXTRA_CREATION_TIME = "extra_creation_time"
     }
 
     @Inject
@@ -50,16 +49,17 @@ class SessionStatusReceiver : BroadcastReceiver() {
         /**
          * Redelivered intents are cached intents that the user hasn't interacted yet with
          */
-//        if (isRedelivered && status < 0) {
-        if (isRedelivered) {
+        if (action == REDELIVER_ACTION) {
             logcat { "This is a redelivery for $packageName" }
-//
-//            if(installer.isPendingUserActionObsolete(packageName, creationTime)) {
-//                logcat { "Redelivery is cancelled for $packageName" }
-//            } else {
-//                logcat { "Redelivery is done for $packageName" }
-//                return installer.onInstallPendingUserAction(packageName, intent)
-//            }
+
+            if (installer.isSessionValid(packageName, sessionId)) {
+                logcat { "Redelivery is sent for $packageName" }
+                installer.onInstallPendingUserAction(packageName, intent)
+            } else {
+                logcat { "Redelivery is cancelled for $packageName" }
+            }
+
+            return
         }
 
         logcat {
@@ -73,8 +73,14 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 when (action) {
                     INSTALL_ACTION -> {
-                        if(installer.isSessionValid(packageName, sessionId)) {
-                            installer.saveStatusPendingIntentForLater(intent)
+                        if (installer.isSessionValid(packageName, sessionId)) {
+                            if (isRedelivered) {
+                                logcat { "This is a redelivery for $packageName" }
+                            } else {
+                                // If it's the time time we're receiving this intent, we save it
+                                installer.saveStatusPendingIntentForLater(intent)
+                            }
+
                             installer.onInstallPendingUserAction(packageName, intent)
                         }
                     }
