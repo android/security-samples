@@ -75,7 +75,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
                     INSTALL_ACTION -> {
                         if(installer.isSessionValid(packageName, sessionId)) {
                             installer.saveStatusPendingIntentForLater(intent)
-//                            installer.onInstallPendingUserAction(packageName, intent)
+                            installer.onInstallPendingUserAction(packageName, intent)
                         }
                     }
                     UNINSTALL_ACTION -> {
