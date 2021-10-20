@@ -105,7 +105,15 @@ class LibraryRepository @Inject constructor(
                 AppSettings.PackageActionType.PENDING_USER_UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
                 AppSettings.PackageActionType.PENDING_USER_UPGRADING -> app.copy(status = AppStatus.UPGRADING)
                 AppSettings.PackageActionType.UNRECOGNIZED,
-                null -> app
+                null -> {
+                    val installTime = getPackageInstallTime(app.packageName)
+
+                    if(installTime > -1) {
+                        app.copy(status = AppStatus.INSTALLED, updatedAt = installTime)
+                    } else {
+                        app
+                    }
+                }
             }
         }.toSortedMap()
     }
