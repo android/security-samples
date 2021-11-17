@@ -41,7 +41,7 @@ class InstallWorker @AssistedInject constructor(
 
     companion object {
         const val PACKAGE_NAME_KEY = "package_name"
-        const val FAKE_DOWNLOADING_DELAY = 3000L
+        const val FAKE_DOWNLOADING_DELAY = 0L
     }
 
     override suspend fun doWork(): Result = coroutineScope {
