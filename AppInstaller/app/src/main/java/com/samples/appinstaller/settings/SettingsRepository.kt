@@ -37,6 +37,7 @@ class SettingsRepository @Inject constructor(
             AppSettings.PackageActionType.PENDING_USER_UNINSTALLING,
         )
     }
+
     val appSettings = context.appSettings
 
     suspend fun setAutoUpdateSchedule(value: Int) {
@@ -111,7 +112,7 @@ class SettingsRepository @Inject constructor(
 
     fun hasPendingUserActions(): Boolean {
         return runBlocking {
-            return@runBlocking context.appSettings.data.first().packageActionsMap.isEmpty()
+            return@runBlocking context.appSettings.data.first().packageActionsMap.isNotEmpty()
         }
     }
 }

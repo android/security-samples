@@ -79,6 +79,7 @@ class LibraryRepository @Inject constructor(
         get() = context.packageManager
 
     private val _apps = MutableStateFlow(storeApps)
+
     /**
      * We combine our store apps list and the installed apps (filtered from apps not being
      * in our store) with the apps being installed or upgraded to get the most up-to-date
@@ -123,7 +124,8 @@ class LibraryRepository @Inject constructor(
      */
     suspend fun loadLibrary() {
         withContext(Dispatchers.IO) {
-            val installedPackages = packageManager.getInstalledPackages(0).associateBy { it.packageName }
+            val installedPackages =
+                packageManager.getInstalledPackages(0).associateBy { it.packageName }
 
             /**
              * We combine our store apps list and the installed apps (filtered from apps not being

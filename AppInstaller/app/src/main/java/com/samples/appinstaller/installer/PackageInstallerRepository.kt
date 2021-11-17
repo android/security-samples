@@ -103,7 +103,7 @@ class PackageInstallerRepository @Inject constructor(
                         pendingIntent.send(
                             context,
                             0,
-                            Intent(SessionStatusReceiver.REDELIVER_ACTION)
+                            Intent(context, SessionStatusReceiver::class.java)
                         )
 
                         logcat { "Redelivered status intent for ${it.packageName}" }
@@ -143,8 +143,9 @@ class PackageInstallerRepository @Inject constructor(
          * after the uninstallation has started
          */
         val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
-            action = SessionStatusReceiver.UNINSTALL_ACTION
+//            action = SessionStatusReceiver.UNINSTALL_ACTION
             data = Uri.fromParts("package", packageName, null)
+            putExtra("action", SessionStatusReceiver.UNINSTALL_ACTION)
         }
 
         runBlocking {
@@ -229,11 +230,11 @@ class PackageInstallerRepository @Inject constructor(
      */
     private fun createStatusIntent(packageName: PackageName): Intent {
         return Intent(context, SessionStatusReceiver::class.java).apply {
-            action = SessionStatusReceiver.INSTALL_ACTION
-
             // For convenience & to ensure a unique intent per-package:
             data = Uri.fromParts("package", packageName, null)
             flags = Intent.FLAG_RECEIVER_FOREGROUND
+
+            putExtra("action", SessionStatusReceiver.INSTALL_ACTION)
         }
     }
 
@@ -349,7 +350,11 @@ class PackageInstallerRepository @Inject constructor(
     fun notifyPendingUserActions() {
         if (settings.hasPendingUserActions()) {
             runBlocking {
-                logcat { "${settings.getPendingUserActions().first().size} pendingUserActions left" }
+                logcat {
+                    "${
+                        settings.getPendingUserActions().first().size
+                    } pendingUserActions left"
+                }
                 notificationRepository.createInstallNotification()
             }
         }

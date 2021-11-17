@@ -20,7 +20,6 @@ import android.os.Handler
 import com.samples.appinstaller.store.PackageName
 import logcat.LogPriority
 import logcat.logcat
-import java.lang.Exception
 
 /**
  * This observer is a workaround used to track dismissed (not cancelled) user actions from
