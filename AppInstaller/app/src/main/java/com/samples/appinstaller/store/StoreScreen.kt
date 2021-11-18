@@ -37,6 +37,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.ListItem
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
@@ -72,6 +73,11 @@ fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
     val apps by remember(appsMap) { derivedStateOf { appsMap.values.toList() } }
 
     fun install(app: AppPackage) = viewModel.installApp(app.packageName)
+    /**
+     * Upgrading is following the same process as install. In this case, we re-install with the same
+     * APK but in a production app, we would fetch a newer version of the app APK and do the same
+     * steps as an install
+     */
     fun upgrade(app: AppPackage) = viewModel.installApp(app.packageName)
     fun uninstall(app: AppPackage) = viewModel.uninstallApp(app.packageName)
     fun open(app: AppPackage) = viewModel.openApp(app.packageName)
@@ -145,7 +151,8 @@ fun AppItem(
                             Button(
                                 modifier = Modifier.weight(1f),
                                 enabled = false,
-                                onClick = { /*TODO*/ }) {
+                                onClick = { /*TODO*/ }
+                            ) {
                                 Text(stringResource(R.string.cancel_label))
                             }
                             Spacer(Modifier.width(5.dp))

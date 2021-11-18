@@ -74,7 +74,6 @@ class AppViewModel @Inject constructor(
         context.packageManager.packageInstaller.mySessions.forEach {
             context.packageManager.packageInstaller.abandonSession(it.sessionId)
         }
-
     }
 
     /**

@@ -38,14 +38,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         /**
-         * TODO: Remove for final commit push
-         * Clean existing install sessions
-         */
-        lifecycleScope.launch {
-            viewModel.cleanWorkspace(this@MainActivity)
-        }
-
-        /**
          * We redeliver saved used actions from previous interactions and add them to the user
          * actions queue
          */
