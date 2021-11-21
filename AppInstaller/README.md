@@ -62,7 +62,7 @@ similar to the install process.
 [5]: https://developer.android.com/reference/kotlin/android/app/PendingIntent
 [6]: https://developer.android.com/reference/kotlin/android/content/pm/PackageInstaller#status_pending_user_action
 [7]: https://developer.android.com/reference/kotlin/android/content/BroadcastReceiver
-[8]: https://developer.android.com/reference/kotlin/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(kotlin.Boolean)
+[8]: https://developer.android.com/reference/kotlin/android/content/pm/PackageInstaller.SessionParams#setrequireuseraction
 [9]: https://developer.android.com/reference/kotlin/android/content/pm/PackageInstaller#uninstall
 
 ## Support
