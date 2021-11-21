@@ -61,8 +61,8 @@ import com.samples.appinstaller.Route
 
 @Composable
 fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
-    LaunchedEffect(viewModel.canInstallPackages()) {
-        if (!viewModel.canInstallPackages()) {
+    LaunchedEffect(viewModel.canInstallPackages) {
+        if (!viewModel.canInstallPackages) {
             navController.navigate(Route.Permission.id)
         }
     }

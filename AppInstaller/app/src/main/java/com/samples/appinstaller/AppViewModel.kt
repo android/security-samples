@@ -39,7 +39,7 @@ class AppViewModel @Inject constructor(
     private val library: LibraryRepository,
     private val settings: SettingsRepository
 ) : ViewModel() {
-    fun canInstallPackages() = installer.canInstallPackages()
+    val canInstallPackages get() = installer.canInstallPackages()
 
     val apps = library.apps
     val appSettings = settings.appSettings.data.stateIn(

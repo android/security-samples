@@ -50,12 +50,12 @@ import androidx.navigation.NavController
 @Composable
 fun PermissionScreen(navController: NavController, viewModel: AppViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    var installPermission by remember { mutableStateOf(viewModel.canInstallPackages()) }
+    var installPermission by remember { mutableStateOf(viewModel.canInstallPackages) }
 
     val permissionCheckerObserver = remember {
         LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                installPermission = viewModel.canInstallPackages()
+                installPermission = viewModel.canInstallPackages
             }
         }
     }

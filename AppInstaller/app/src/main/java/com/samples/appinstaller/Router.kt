@@ -31,7 +31,7 @@ fun Router(viewModel: AppViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = if (viewModel.canInstallPackages()) Route.Store.id else Route.Permission.id
+        startDestination = if (viewModel.canInstallPackages) Route.Store.id else Route.Permission.id
     ) {
         composable(Route.Permission.id) { PermissionScreen(navController, viewModel) }
         composable(Route.Store.id) { StoreScreen(navController, viewModel) }
