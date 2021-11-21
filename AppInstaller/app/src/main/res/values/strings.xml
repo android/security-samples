@@ -34,6 +34,7 @@
     <string name="uninstalling_label">Uninstalling</string>
     <string name="uninstall_label">Uninstall</string>
     <string name="open_label">Open</string>
+    <string name="upgrade_label">Upgrade</string>
     <string name="upgrading_label">Upgrading</string>
     <string name="refresh_library">Refresh library</string>
 
