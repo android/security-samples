@@ -50,7 +50,7 @@ class AppViewModel @Inject constructor(
 
     val pendingUserActionEvents = installer.pendingUserActionEvents
     fun redeliverSavedUserActions() = installer.redeliverSavedUserActions()
-    fun getPendingUserActionFromQueue() = installer.getPendingUserActionFromQueue()
+    fun getPendingUserActionFromQueue(): Intent? = installer.getPendingUserActionFromQueue()
     private fun removePendingUserActionFromQueue() = installer.removePendingUserActionFromQueue()
 
     private var sessionActionObserver: SessionActionObserver? = null
