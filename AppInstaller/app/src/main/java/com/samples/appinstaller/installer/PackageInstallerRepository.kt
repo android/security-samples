@@ -22,8 +22,6 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.SessionParams
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import androidx.core.os.BuildCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -139,7 +137,6 @@ class PackageInstallerRepository @Inject constructor(
          * after the uninstallation has started
          */
         val statusIntent = Intent(context, SessionStatusReceiver::class.java).apply {
-//            action = SessionStatusReceiver.UNINSTALL_ACTION
             data = Uri.fromParts("package", packageName, null)
             putExtra("action", SessionStatusReceiver.UNINSTALL_ACTION)
         }
@@ -345,7 +342,7 @@ class PackageInstallerRepository @Inject constructor(
             runBlocking {
                 logcat {
                     "${
-                        settings.getPendingUserActions().first().size
+                    settings.getPendingUserActions().first().size
                     } pendingUserActions left"
                 }
                 notificationRepository.createInstallNotification()

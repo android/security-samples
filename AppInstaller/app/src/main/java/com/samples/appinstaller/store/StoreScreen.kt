@@ -145,7 +145,8 @@ fun AppItem(
                             Button(
                                 modifier = Modifier.weight(1f),
                                 enabled = false,
-                                onClick = { /*TODO*/ }) {
+                                onClick = { /*TODO*/ }
+                            ) {
                                 Text(stringResource(R.string.cancel_label))
                             }
                             Spacer(Modifier.width(5.dp))

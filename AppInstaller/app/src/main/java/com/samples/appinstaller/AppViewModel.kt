@@ -15,7 +15,6 @@
  */
 package com.samples.appinstaller
 
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -64,17 +63,6 @@ class AppViewModel @Inject constructor(
      */
     init {
         refreshLibrary()
-    }
-
-    /**
-     * TODO: Remove for final commit push
-     * Clean existing install sessions
-     */
-    fun cleanWorkspace(context: Context) {
-        context.packageManager.packageInstaller.mySessions.forEach {
-            context.packageManager.packageInstaller.abandonSession(it.sessionId)
-        }
-
     }
 
     /**

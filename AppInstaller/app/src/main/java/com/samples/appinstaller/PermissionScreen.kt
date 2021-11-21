@@ -50,18 +50,18 @@ import androidx.navigation.NavController
 @Composable
 fun PermissionScreen(navController: NavController, viewModel: AppViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    var installPermission by remember { mutableStateOf(viewModel.canInstallPackages) }
+    var isInstallPermissionGranted by remember { mutableStateOf(viewModel.canInstallPackages) }
 
     val permissionCheckerObserver = remember {
         LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                installPermission = viewModel.canInstallPackages
+                isInstallPermissionGranted = viewModel.canInstallPackages
             }
         }
     }
 
-    LaunchedEffect(installPermission) {
-        if (installPermission) {
+    LaunchedEffect(isInstallPermissionGranted) {
+        if (isInstallPermissionGranted) {
             navController.navigate(Route.Store.id)
         }
     }
