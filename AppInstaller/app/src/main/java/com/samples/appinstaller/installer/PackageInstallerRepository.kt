@@ -120,11 +120,7 @@ class PackageInstallerRepository @Inject constructor(
      * Check if the app is allowed to install apps
      */
     fun canInstallPackages(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            packageManager.canRequestPackageInstalls()
-        } else {
-            Settings.Global.getInt(null, Settings.Global.INSTALL_NON_MARKET_APPS, 0) == 1
-        }
+        return packageManager.canRequestPackageInstalls()
     }
 
     /**
@@ -199,10 +195,7 @@ class PackageInstallerRepository @Inject constructor(
         val params = SessionParams(SessionParams.MODE_FULL_INSTALL)
             .apply {
                 setAppPackageName(packageName)
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    setInstallReason(PackageManager.INSTALL_REASON_USER)
-                }
+                setInstallReason(PackageManager.INSTALL_REASON_USER)
 
                 if (BuildCompat.isAtLeastS()) {
                     setRequireUserAction(SessionParams.USER_ACTION_NOT_REQUIRED)
