@@ -30,7 +30,9 @@ data class PackageAction(
     @ColumnInfo(name = "session_id") val sessionId: Int?,
     @ColumnInfo(name = "status") val status: ActionStatus,
     @ColumnInfo(name = "created_at") val createdAt: Long,
-)
+) {
+    fun toLog() = PackageActionLog(0, packageName, type, sessionId, status, createdAt)
+}
 
 /**
  * Immutable entry of a [PackageAction], used for monitoring
