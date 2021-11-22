@@ -37,10 +37,10 @@ interface PackageInstallerDao {
     }
 
     /**
-     * Get [PackageAction] only if it's set to PENDING_USER_ACTION
+     * Get [PackageAction] only if they're set to PENDING_USER_ACTION
      */
-    @Query("SELECT * FROM package_actions WHERE packageName = :packageName AND status = 'PENDING_USER_ACTION'")
-    suspend fun getPendingUserAction(packageName: PackageName): PackageAction?
+    @Query("SELECT * FROM package_actions WHERE status = 'PENDING_USER_ACTION' ORDER BY created_at ASC")
+    suspend fun getPendingUserActions(): List<PackageAction>
 
     /**
      * Get [PackageAction] only if it's set to PENDING_USER_ACTION

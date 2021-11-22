@@ -32,12 +32,10 @@ import com.samples.appinstaller.NotificationRepository
 import com.samples.appinstaller.database.ActionStatus
 import com.samples.appinstaller.database.ActionType
 import com.samples.appinstaller.database.PackageInstallerDao
-import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.PackageName
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import logcat.asLog
@@ -52,7 +50,6 @@ import javax.inject.Singleton
 class PackageInstallerRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val notificationRepository: NotificationRepository,
-    private val settings: SettingsRepository,
     private val database: PackageInstallerDao,
 ) {
     private val packageManager: PackageManager
@@ -106,13 +103,17 @@ class PackageInstallerRepository @Inject constructor(
      */
     fun redeliverSavedUserActions() {
         runBlocking {
-            val inProgressActions = database.getActionsByPackage().first()
+            val pendingUserActions = database.getPendingUserActions()
 
-            inProgressActions.forEach { (packageName, _) ->
+            pendingUserActions.forEach { (packageName, _) ->
                 val pendingIntent = getCachedStatusPendingIntent(packageName)
 
                 if (pendingIntent == null) {
-                    settings.removePackageAction(packageName)
+                    database.addAction(
+                        packageName = packageName,
+                        type = ActionType.INSTALL,
+                        status = ActionStatus.FAILURE,
+                    )
                 } else {
                     try {
                         pendingIntent.send(
@@ -124,7 +125,11 @@ class PackageInstallerRepository @Inject constructor(
                         logcat { "Redelivered status intent for $packageName" }
                     } catch (ignored: PendingIntent.CanceledException) {
                         logcat(LogPriority.ERROR) { ignored.asLog() }
-                        settings.removePackageAction(packageName)
+                        database.addAction(
+                            packageName = packageName,
+                            type = ActionType.INSTALL,
+                            status = ActionStatus.FAILURE,
+                        )
                     }
                 }
             }
@@ -189,7 +194,7 @@ class PackageInstallerRepository @Inject constructor(
      */
     fun cancelInstall(packageName: PackageName) {
         WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
-        onInstallComplete(packageName, ActionStatus.CANCELLATION, -1)
+        onInstallComplete(packageName, ActionStatus.CANCELLATION, null)
     }
 
     /**
@@ -367,13 +372,10 @@ class PackageInstallerRepository @Inject constructor(
     }
 
     fun notifyPendingUserActions() {
-        if (settings.hasPendingUserActions()) {
-            runBlocking {
-                logcat {
-                    "${
-                    settings.getPendingUserActions().first().size
-                    } pendingUserActions left"
-                }
+        runBlocking {
+            val pendingUserActions = database.getPendingUserActions()
+            if (pendingUserActions.isNotEmpty()) {
+                logcat { "${pendingUserActions.size} pendingUserActions left" }
                 notificationRepository.createInstallNotification()
             }
         }
@@ -390,7 +392,7 @@ class PackageInstallerRepository @Inject constructor(
         return SessionActionObserver(packageInstaller, packageName, sessionId)
     }
 
-    fun onInstallComplete(packageName: PackageName, status: ActionStatus, sessionId: Int) {
+    fun onInstallComplete(packageName: PackageName, status: ActionStatus, sessionId: Int?) {
         runBlocking {
             database.addAction(
                 packageName = packageName,

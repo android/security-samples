@@ -16,13 +16,7 @@
 package com.samples.appinstaller.settings
 
 import android.content.Context
-import com.samples.appinstaller.AppSettings
-import com.samples.appinstaller.store.PackageName
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,14 +24,6 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    companion object {
-        val PENDING_USER_ACTIONS = listOf(
-            AppSettings.PackageActionType.PENDING_USER_INSTALLING,
-            AppSettings.PackageActionType.PENDING_USER_UPGRADING,
-            AppSettings.PackageActionType.PENDING_USER_UNINSTALLING,
-        )
-    }
-
     val appSettings = context.appSettings
 
     suspend fun setAutoUpdateSchedule(value: Int) {
@@ -51,28 +37,6 @@ class SettingsRepository @Inject constructor(
             currentSettings.toBuilder()
                 .setUpdateAvailabilityPeriodValue(value)
                 .build()
-        }
-    }
-
-    suspend fun removePackageAction(packageName: PackageName) {
-        context.appSettings.updateData { currentSettings ->
-            currentSettings.toBuilder()
-                .removePackageActions(packageName)
-                .build()
-        }
-    }
-
-    fun getPendingUserActions(): Flow<Map<String, AppSettings.PackageAction>> {
-        return context.appSettings.data.map { settings ->
-            settings.packageActionsMap.filterValues { action ->
-                PENDING_USER_ACTIONS.contains(action.packageActionType)
-            }
-        }
-    }
-
-    fun hasPendingUserActions(): Boolean {
-        return runBlocking {
-            return@runBlocking context.appSettings.data.first().packageActionsMap.isNotEmpty()
         }
     }
 }

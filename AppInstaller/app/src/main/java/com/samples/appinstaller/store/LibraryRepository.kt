@@ -19,6 +19,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import com.samples.appinstaller.R
 import com.samples.appinstaller.database.ActionStatus
+import com.samples.appinstaller.database.ActionType
 import com.samples.appinstaller.database.PackageInstallerDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -95,7 +96,12 @@ class LibraryRepository @Inject constructor(
             when (action?.status) {
                 ActionStatus.COMMITTED,
                 ActionStatus.INITIALIZED,
-                ActionStatus.PENDING_USER_ACTION -> app.copy(status = AppStatus.INSTALLING)
+                ActionStatus.PENDING_USER_ACTION -> {
+                    when (action.type) {
+                        ActionType.INSTALL -> app.copy(status = AppStatus.INSTALLING)
+                        ActionType.UNINSTALL -> app.copy(status = AppStatus.UNINSTALLING)
+                    }
+                }
 
                 ActionStatus.SUCCESS,
                 ActionStatus.FAILURE,
