@@ -178,15 +178,27 @@ fun AppItem(
                             Spacer(Modifier.width(5.dp))
                         }
                         AppStatus.INSTALLED -> {
-                            Spacer(Modifier.width(5.dp))
-                            Button(modifier = Modifier.weight(1f), onClick = { onUninstall(app) }) {
-                                Text(stringResource(R.string.uninstall_label))
+                            Column(Modifier.fillMaxWidth()) {
+                                Row {
+                                    Spacer(Modifier.width(5.dp))
+                                    Button(modifier = Modifier.weight(1f), onClick = { onUninstall(app) }) {
+                                        Text(stringResource(R.string.uninstall_label))
+                                    }
+                                    Spacer(Modifier.width(5.dp))
+                                    Button(modifier = Modifier.weight(1f), onClick = { onOpen(app) }) {
+                                        Text(stringResource(R.string.open_label))
+                                    }
+                                    Spacer(Modifier.width(5.dp))
+                                }
+                                Spacer(Modifier.height(5.dp))
+                                Row {
+                                    Spacer(Modifier.width(5.dp))
+                                    OutlinedButton(modifier = Modifier.weight(1f), onClick = { onUpgrade(app) }) {
+                                        Text(stringResource(R.string.upgrade_label))
+                                    }
+                                    Spacer(Modifier.width(5.dp))
+                                }
                             }
-                            Spacer(Modifier.width(5.dp))
-                            Button(modifier = Modifier.weight(1f), onClick = { onOpen(app) }) {
-                                Text(stringResource(R.string.open_label))
-                            }
-                            Spacer(Modifier.width(5.dp))
                         }
                         AppStatus.UPGRADING -> {
                             Spacer(Modifier.width(5.dp))
