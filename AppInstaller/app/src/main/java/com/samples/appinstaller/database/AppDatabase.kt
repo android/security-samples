@@ -18,7 +18,7 @@ package com.samples.appinstaller.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-@Database(entities = [PackageAction::class], version = 1)
+@Database(entities = [PackageAction::class, PackageActionLog::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun packageActionDao(): PackageInstallerDao
 }

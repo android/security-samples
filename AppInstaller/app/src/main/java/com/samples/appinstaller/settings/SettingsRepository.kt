@@ -54,42 +54,6 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun addPackageAction(
-        packageName: PackageName,
-        type: AppSettings.PackageActionType,
-        creationTime: Long,
-        sessionId: Int = -1,
-    ) {
-        val packageAction = AppSettings.PackageAction.newBuilder()
-        packageAction.packageName = packageName
-        packageAction.packageActionType = type
-        packageAction.creationTime = creationTime
-        packageAction.sessionId = sessionId
-
-        context.appSettings.updateData { currentSettings ->
-            currentSettings.toBuilder()
-                .putPackageActions(packageName, packageAction.build())
-                .build()
-        }
-    }
-
-    suspend fun updatePackageAction(packageName: PackageName, type: AppSettings.PackageActionType) {
-        context.appSettings.updateData { currentSettings ->
-            val app = currentSettings.packageActionsMap[packageName]
-                ?: return@updateData currentSettings.toBuilder().build()
-
-            val packageAction = AppSettings.PackageAction.newBuilder()
-            packageAction.packageName = packageName
-            packageAction.packageActionType = type
-            packageAction.sessionId = app.sessionId
-            packageAction.creationTime = app.creationTime
-
-            currentSettings.toBuilder()
-                .putPackageActions(packageName, packageAction.build())
-                .build()
-        }
-    }
-
     suspend fun removePackageAction(packageName: PackageName) {
         context.appSettings.updateData { currentSettings ->
             currentSettings.toBuilder()
@@ -98,21 +62,11 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun getPackageAction(packageName: PackageName): AppSettings.PackageAction? {
-        return context.appSettings.data.first().packageActionsMap[packageName]
-    }
-
     fun getPendingUserActions(): Flow<Map<String, AppSettings.PackageAction>> {
         return context.appSettings.data.map { settings ->
             settings.packageActionsMap.filterValues { action ->
                 PENDING_USER_ACTIONS.contains(action.packageActionType)
             }
-        }
-    }
-
-    fun getInProgressActions(): Flow<Map<String, AppSettings.PackageAction>> {
-        return context.appSettings.data.map { settings ->
-            settings.packageActionsMap
         }
     }
 

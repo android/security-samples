@@ -33,13 +33,25 @@ interface PackageInstallerDao {
      * Get most recent action by [PackageName]
      */
     fun getActionsByPackage(): Flow<Map<PackageName, PackageAction>> {
-        return getAllActions().map { actions ->
-            actions
-                .sortedByDescending { it.createdAt }
-                .distinctBy { it.packageName }
-                .map { it.packageName to it }
-                .toMap()
-        }
+        return getAllActions().map { actions -> actions.map { it.packageName to it }.toMap() }
+    }
+
+    /**
+     * Get [PackageAction] only if it's set to PENDING_USER_ACTION
+     */
+    @Query("SELECT * FROM package_actions WHERE packageName = :packageName AND status = 'PENDING_USER_ACTION'")
+    suspend fun getPendingUserAction(packageName: PackageName): PackageAction?
+
+    /**
+     * Get [PackageAction] only if it's set to PENDING_USER_ACTION
+     */
+    @Query("SELECT * FROM package_actions WHERE packageName = :packageName")
+    suspend fun getPackageAction(packageName: PackageName): PackageAction?
+
+    suspend fun getPackageAction(packageName: PackageName, status: ActionStatus): PackageAction? {
+        val action = getPackageAction(packageName)
+
+        return if (action?.status == status) action else null
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

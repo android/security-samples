@@ -81,7 +81,7 @@ class InstallWorker @AssistedInject constructor(
 
             /**
              * We commit our session to finalize it and give it a pending intent that will be send
-             * back to our app via [com.samples.appinstaller.SessionStatusReceiver] after the
+             * back to our app via [SessionStatusReceiver] after the
              * session has been processed
              */
             logcat { "Committing session for $packageName" }
@@ -96,7 +96,11 @@ class InstallWorker @AssistedInject constructor(
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            settings.removePackageAction(packageName)
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.INSTALL,
+                status = ActionStatus.FAILURE,
+            )
             return@coroutineScope Result.failure()
         }
 

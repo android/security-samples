@@ -28,7 +28,6 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.NotificationRepository
 import com.samples.appinstaller.database.ActionStatus
 import com.samples.appinstaller.database.ActionType
@@ -109,7 +108,7 @@ class PackageInstallerRepository @Inject constructor(
         runBlocking {
             val inProgressActions = database.getActionsByPackage().first()
 
-            inProgressActions.forEach { (packageName, packageAction) ->
+            inProgressActions.forEach { (packageName, _) ->
                 val pendingIntent = getCachedStatusPendingIntent(packageName)
 
                 if (pendingIntent == null) {
@@ -171,12 +170,6 @@ class PackageInstallerRepository @Inject constructor(
             val statusPendingIntent =
                 PendingIntent.getBroadcast(context, 0, statusIntent, PendingIntent.FLAG_MUTABLE)
 
-            settings.addPackageAction(
-                packageName,
-                AppSettings.PackageActionType.UNINSTALLING,
-                System.currentTimeMillis()
-            )
-
             packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
 
             runBlocking {
@@ -196,7 +189,7 @@ class PackageInstallerRepository @Inject constructor(
      */
     fun cancelInstall(packageName: PackageName) {
         WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
-        onInstallComplete(packageName, -1, ActionStatus.CANCELLATION)
+        onInstallComplete(packageName, ActionStatus.CANCELLATION, -1)
     }
 
     /**
@@ -293,7 +286,7 @@ class PackageInstallerRepository @Inject constructor(
      * already. In this case, it means our pending user action intent hasn't been completed by the
      * user yet, so we bring it back to the user to complete or cancel it
      */
-    fun getCachedStatusPendingIntent(packageName: PackageName): PendingIntent? {
+    private fun getCachedStatusPendingIntent(packageName: PackageName): PendingIntent? {
         return PendingIntent.getBroadcast(
             context,
             0,
@@ -314,13 +307,6 @@ class PackageInstallerRepository @Inject constructor(
         statusIntent.removeExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
         statusIntent.putExtra(SessionStatusReceiver.EXTRA_REDELIVER, true)
         updateStatusPendingIntent(statusIntent)
-
-        runBlocking {
-            settings.updatePackageAction(
-                packageName,
-                AppSettings.PackageActionType.PENDING_USER_INSTALLING
-            )
-        }
     }
 
     /**
@@ -332,16 +318,16 @@ class PackageInstallerRepository @Inject constructor(
         getCachedStatusPendingIntent(packageName)?.cancel()
     }
 
-    fun isSessionValid(packageName: PackageName, sessionId: Int): Boolean {
+    fun isSessionValid(packageName: PackageName, status: ActionStatus, sessionId: Int): Boolean {
         return runBlocking {
-            val savedPackageAction = settings.getPackageAction(packageName)
+            val packageAction = database.getPackageAction(packageName, status)
 
-            if (savedPackageAction != null) {
-                if (savedPackageAction.sessionId == sessionId) {
+            if (packageAction != null) {
+                if (packageAction.sessionId == sessionId) {
                     return@runBlocking true
                 } else {
                     logcat(LogPriority.ERROR) {
-                        "isSessionValid: $packageName ($sessionId) isn't the same as the one saved ${savedPackageAction.sessionId}"
+                        "isSessionValid: $packageName ($sessionId) isn't the same as the one saved ${packageAction.sessionId}"
                     }
                     return@runBlocking false
                 }
@@ -404,7 +390,7 @@ class PackageInstallerRepository @Inject constructor(
         return SessionActionObserver(packageInstaller, packageName, sessionId)
     }
 
-    fun onInstallComplete(packageName: PackageName, sessionId: Int, status: ActionStatus) {
+    fun onInstallComplete(packageName: PackageName, status: ActionStatus, sessionId: Int) {
         runBlocking {
             database.addAction(
                 packageName = packageName,
@@ -417,7 +403,7 @@ class PackageInstallerRepository @Inject constructor(
         cancelStatusPendingIntent(packageName)
     }
 
-    fun onUninstallComplete(packageName: PackageName, sessionId: Int, status: ActionStatus) {
+    fun onUninstallComplete(packageName: PackageName, status: ActionStatus, sessionId: Int) {
         runBlocking {
             database.addAction(
                 packageName = packageName,

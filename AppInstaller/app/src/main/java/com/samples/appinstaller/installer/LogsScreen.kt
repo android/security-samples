@@ -86,12 +86,13 @@ fun LogsScreen(navController: NavController, viewModel: AppViewModel) {
             LazyColumn(Modifier.padding(innerPadding)) {
                 items(logs) { log ->
                     val backgroundColor = when (log.status) {
-                        ActionStatus.INITIALIZED -> Color.Transparent
+                        ActionStatus.INITIALIZED -> Color.White
                         ActionStatus.COMMITTED -> Color.LightGray
                         ActionStatus.PENDING_USER_ACTION -> Color.Cyan
                         ActionStatus.SUCCESS -> Color.Green
                         ActionStatus.FAILURE -> Color.Yellow
                         ActionStatus.UNKNOWN -> Color.Magenta
+                        ActionStatus.CANCELLATION -> Color.DarkGray
                     }
 
                     ListItem(
