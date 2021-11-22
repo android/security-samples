@@ -19,7 +19,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import com.samples.appinstaller.settings.SettingsRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import logcat.logcat
 import javax.inject.Inject
@@ -35,6 +37,9 @@ class SessionStatusReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var installer: PackageInstallerRepository
+
+    @Inject
+    lateinit var settings: SettingsRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.getStringExtra("action")
@@ -112,7 +117,12 @@ class SessionStatusReceiver : BroadcastReceiver() {
                 }
             }
 
-            else -> logcat(LogPriority.ERROR) { "Unknown status: $status" }
+            else -> {
+                logcat(LogPriority.ERROR) { "Unknown status: $status" }
+                runBlocking {
+                    settings.removePackageAction(packageName)
+                }
+            }
         }
     }
 

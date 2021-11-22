@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.samples.appinstaller.installer.LogsScreen
 import com.samples.appinstaller.settings.SettingsScreen
 import com.samples.appinstaller.store.StoreScreen
 
@@ -36,6 +37,7 @@ fun Router(viewModel: AppViewModel) {
         composable(Route.Permission.id) { PermissionScreen(navController, viewModel) }
         composable(Route.Store.id) { StoreScreen(navController, viewModel) }
         composable(Route.Settings.id) { SettingsScreen(navController, viewModel) }
+        composable(Route.Logs.id) { LogsScreen(navController, viewModel) }
     }
 }
 
@@ -49,5 +51,10 @@ sealed class Route(val id: String) {
     object Settings : Route("settings") {
         val icon = Icons.Filled.Settings
         const val title = "Settings"
+    }
+
+    object Logs : Route("logs") {
+        val icon = Icons.Filled.Settings
+        const val title = "Log"
     }
 }

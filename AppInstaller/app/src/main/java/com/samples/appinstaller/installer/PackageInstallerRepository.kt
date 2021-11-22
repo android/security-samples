@@ -95,8 +95,14 @@ class PackageInstallerRepository @Inject constructor(
      */
     fun redeliverSavedUserActions() {
         runBlocking {
-            settings.getPendingUserActions().first().values.forEach {
-                getCachedStatusPendingIntent(it.packageName)?.let { pendingIntent ->
+            val inProgressActions = settings.getInProgressActions().first().values
+
+            inProgressActions.forEach {
+                val pendingIntent = getCachedStatusPendingIntent(it.packageName)
+
+                if(pendingIntent == null) {
+                    settings.removePackageAction(it.packageName)
+                } else {
                     try {
                         pendingIntent.send(
                             context,

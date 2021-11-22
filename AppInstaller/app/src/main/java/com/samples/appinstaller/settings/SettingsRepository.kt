@@ -110,6 +110,12 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    fun getInProgressActions(): Flow<Map<String, AppSettings.PackageAction>> {
+        return context.appSettings.data.map { settings ->
+            settings.packageActionsMap
+        }
+    }
+
     fun hasPendingUserActions(): Boolean {
         return runBlocking {
             return@runBlocking context.appSettings.data.first().packageActionsMap.isNotEmpty()
