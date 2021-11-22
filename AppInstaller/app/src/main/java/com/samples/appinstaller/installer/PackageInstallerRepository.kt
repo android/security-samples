@@ -30,6 +30,9 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.NotificationRepository
+import com.samples.appinstaller.database.ActionStatus
+import com.samples.appinstaller.database.ActionType
+import com.samples.appinstaller.database.PackageInstallerDao
 import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.PackageName
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -50,7 +53,8 @@ import javax.inject.Singleton
 class PackageInstallerRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val notificationRepository: NotificationRepository,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    private val database: PackageInstallerDao,
 ) {
     private val packageManager: PackageManager
         get() = context.packageManager
@@ -90,18 +94,26 @@ class PackageInstallerRepository @Inject constructor(
         pendingUserActionQueue.poll()
     }
 
+    fun cleanOldSessions() {
+        runBlocking {
+            // Delete uncommitted sessions older than 60 seconds
+            val deletedSessionsCount = database.cleanOldActions(System.currentTimeMillis() - 60_000L)
+            logcat { "Deleted old sessions ($deletedSessionsCount)" }
+        }
+    }
+
     /**
      * Add saved pending intents to the [pendingUserActionQueue]
      */
     fun redeliverSavedUserActions() {
         runBlocking {
-            val inProgressActions = settings.getInProgressActions().first().values
+            val inProgressActions = database.getActionsByPackage().first()
 
-            inProgressActions.forEach {
-                val pendingIntent = getCachedStatusPendingIntent(it.packageName)
+            inProgressActions.forEach { (packageName, packageAction) ->
+                val pendingIntent = getCachedStatusPendingIntent(packageName)
 
-                if(pendingIntent == null) {
-                    settings.removePackageAction(it.packageName)
+                if (pendingIntent == null) {
+                    settings.removePackageAction(packageName)
                 } else {
                     try {
                         pendingIntent.send(
@@ -110,10 +122,10 @@ class PackageInstallerRepository @Inject constructor(
                             Intent(context, SessionStatusReceiver::class.java)
                         )
 
-                        logcat { "Redelivered status intent for ${it.packageName}" }
+                        logcat { "Redelivered status intent for $packageName" }
                     } catch (ignored: PendingIntent.CanceledException) {
                         logcat(LogPriority.ERROR) { ignored.asLog() }
-                        settings.removePackageAction(it.packageName)
+                        settings.removePackageAction(packageName)
                     }
                 }
             }
@@ -137,6 +149,14 @@ class PackageInstallerRepository @Inject constructor(
      * Uninstall this package name
      */
     fun uninstallApp(packageName: PackageName) {
+        runBlocking {
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.UNINSTALL,
+                status = ActionStatus.INITIALIZED
+            )
+        }
+
         /**
          * We request an uninstallation from [PackageInstaller] and provides a pending intent that
          * will be send back to our app via [com.samples.appinstaller.installer.SessionStatusReceiver]
@@ -158,6 +178,14 @@ class PackageInstallerRepository @Inject constructor(
             )
 
             packageInstaller.uninstall(packageName, statusPendingIntent.intentSender)
+
+            runBlocking {
+                database.addAction(
+                    packageName = packageName,
+                    type = ActionType.UNINSTALL,
+                    status = ActionStatus.COMMITTED
+                )
+            }
         }
     }
 
@@ -168,7 +196,7 @@ class PackageInstallerRepository @Inject constructor(
      */
     fun cancelInstall(packageName: PackageName) {
         WorkManager.getInstance(context).cancelAllWorkByTag(packageName)
-        completeAction("cancelInstall", packageName)
+        onInstallComplete(packageName, -1, ActionStatus.CANCELLATION)
     }
 
     /**
@@ -326,10 +354,19 @@ class PackageInstallerRepository @Inject constructor(
         }
     }
 
-    fun onInstallPendingUserAction(packageName: PackageName, statusIntent: Intent) {
+    fun onInstallPendingUserAction(packageName: PackageName, sessionId: Int, statusIntent: Intent) {
         logcat { "onInstallPendingUserAction $packageName" }
 
         enqueuePendingUserAction(packageName, statusIntent)
+
+        runBlocking {
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.INSTALL,
+                sessionId = sessionId,
+                status = ActionStatus.PENDING_USER_ACTION
+            )
+        }
 
         // We display a notification if the app isn't resumed
         if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
@@ -367,12 +404,29 @@ class PackageInstallerRepository @Inject constructor(
         return SessionActionObserver(packageInstaller, packageName, sessionId)
     }
 
-    fun completeAction(action: String, packageName: PackageName) {
-        logcat { "$action $packageName" }
-
+    fun onInstallComplete(packageName: PackageName, sessionId: Int, status: ActionStatus) {
         runBlocking {
-            cancelStatusPendingIntent(packageName)
-            settings.removePackageAction(packageName)
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.INSTALL,
+                sessionId = sessionId,
+                status = status
+            )
         }
+
+        cancelStatusPendingIntent(packageName)
+    }
+
+    fun onUninstallComplete(packageName: PackageName, sessionId: Int, status: ActionStatus) {
+        runBlocking {
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.UNINSTALL,
+                sessionId = sessionId,
+                status = status
+            )
+        }
+
+        cancelStatusPendingIntent(packageName)
     }
 }

@@ -18,6 +18,7 @@ package com.samples.appinstaller
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.samples.appinstaller.database.PackageInstallerDao
 import com.samples.appinstaller.installer.PackageInstallerRepository
 import com.samples.appinstaller.installer.SessionActionObserver
 import com.samples.appinstaller.settings.SettingsRepository
@@ -36,10 +37,12 @@ import javax.inject.Inject
 class AppViewModel @Inject constructor(
     private val installer: PackageInstallerRepository,
     private val library: LibraryRepository,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    database: PackageInstallerDao,
 ) : ViewModel() {
     val canInstallPackages get() = installer.canInstallPackages()
 
+    val logs = database.getAllLogs()
     val apps = library.apps
     val appSettings = settings.appSettings.data.stateIn(
         viewModelScope,
@@ -48,6 +51,7 @@ class AppViewModel @Inject constructor(
     )
 
     val pendingUserActionEvents = installer.pendingUserActionEvents
+    fun cleanOldSessions() = installer.cleanOldSessions()
     fun redeliverSavedUserActions() = installer.redeliverSavedUserActions()
     fun getPendingUserActionFromQueue(): Intent? = installer.getPendingUserActionFromQueue()
     private fun removePendingUserActionFromQueue() = installer.removePendingUserActionFromQueue()

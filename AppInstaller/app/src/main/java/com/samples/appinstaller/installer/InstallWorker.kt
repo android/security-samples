@@ -20,7 +20,9 @@ import android.content.pm.PackageInstaller
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.samples.appinstaller.AppSettings
+import com.samples.appinstaller.database.ActionStatus
+import com.samples.appinstaller.database.ActionType
+import com.samples.appinstaller.database.PackageInstallerDao
 import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.PackageName
 import dagger.assisted.Assisted
@@ -36,12 +38,13 @@ class InstallWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val installer: PackageInstallerRepository,
-    private val settings: SettingsRepository
+    private val settings: SettingsRepository,
+    private val database: PackageInstallerDao,
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
         const val PACKAGE_NAME_KEY = "package_name"
-        const val FAKE_DOWNLOADING_DELAY = 2000L
+        const val FAKE_DOWNLOADING_DELAY = 5000L
     }
 
     override suspend fun doWork(): Result = coroutineScope {
@@ -60,11 +63,12 @@ class InstallWorker @AssistedInject constructor(
             val sessionInfo = installer.getSessionInfo(sessionId)
                 ?: return@coroutineScope Result.failure()
 
-            settings.addPackageAction(
-                packageName,
-                AppSettings.PackageActionType.INSTALLING,
-                sessionInfo.createdMillis,
-                sessionId
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.INSTALL,
+                sessionId = sessionId,
+                status = ActionStatus.INITIALIZED,
+                createdAt = sessionInfo.createdMillis
             )
 
             // We simulate a delay as installers would probably download first the APK from a remote
@@ -83,6 +87,13 @@ class InstallWorker @AssistedInject constructor(
             logcat { "Committing session for $packageName" }
             val pendingIntent = installer.createStatusPendingIntent(packageName)
             session.commit(pendingIntent.intentSender)
+
+            database.addAction(
+                packageName = packageName,
+                type = ActionType.INSTALL,
+                sessionId = sessionId,
+                status = ActionStatus.COMMITTED,
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             settings.removePackageAction(packageName)

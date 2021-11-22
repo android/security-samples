@@ -55,6 +55,6 @@ sealed class Route(val id: String) {
 
     object Logs : Route("logs") {
         val icon = Icons.Filled.Settings
-        const val title = "Log"
+        const val title = "Logs"
     }
 }

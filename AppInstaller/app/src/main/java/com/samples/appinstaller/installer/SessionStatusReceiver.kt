@@ -19,6 +19,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import com.samples.appinstaller.database.ActionStatus
 import com.samples.appinstaller.settings.SettingsRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
@@ -54,7 +55,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
          */
         if (isRedelivered && status < 0) {
             logcat { "This is a redelivery for $packageName" }
-            installer.onInstallPendingUserAction(packageName, intent)
+            installer.onInstallPendingUserAction(packageName, sessionId, intent)
             return
         }
 
@@ -73,7 +74,7 @@ class SessionStatusReceiver : BroadcastReceiver() {
                             // If it's the time time we're receiving this intent, we save it
                             installer.saveStatusPendingIntentForLater(intent)
 
-                            installer.onInstallPendingUserAction(packageName, intent)
+                            installer.onInstallPendingUserAction(packageName, sessionId, intent)
                         }
                     }
                     UNINSTALL_ACTION -> {
@@ -88,10 +89,10 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> {
                 when (action) {
                     INSTALL_ACTION -> {
-                        installer.completeAction("onInstallSuccess", packageName)
+                        installer.onInstallComplete(packageName, sessionId, ActionStatus.SUCCESS)
                     }
                     UNINSTALL_ACTION -> {
-                        installer.completeAction("onUninstallSuccess", packageName)
+                        installer.onUninstallComplete(packageName, sessionId, ActionStatus.SUCCESS)
                     }
                     else -> logcat(LogPriority.ERROR) { "Unhandled status: $status" }
                 }
@@ -108,10 +109,10 @@ class SessionStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE_STORAGE -> {
                 when (action) {
                     INSTALL_ACTION -> {
-                        installer.completeAction("onInstallFailure", packageName)
+                        installer.onInstallComplete(packageName, sessionId, ActionStatus.FAILURE)
                     }
                     UNINSTALL_ACTION -> {
-                        installer.completeAction("onUninstallFailure", packageName)
+                        installer.onUninstallComplete(packageName, sessionId, ActionStatus.FAILURE)
                     }
                     else -> logcat(LogPriority.ERROR) { "Unhandled failure status: $status" }
                 }
@@ -119,8 +120,15 @@ class SessionStatusReceiver : BroadcastReceiver() {
 
             else -> {
                 logcat(LogPriority.ERROR) { "Unknown status: $status" }
-                runBlocking {
-                    settings.removePackageAction(packageName)
+
+                when (action) {
+                    INSTALL_ACTION -> {
+                        installer.onInstallComplete(packageName, sessionId, ActionStatus.UNKNOWN)
+                    }
+                    UNINSTALL_ACTION -> {
+                        installer.onUninstallComplete(packageName, sessionId, ActionStatus.UNKNOWN)
+                    }
+                    else -> logcat(LogPriority.ERROR) { "Unhandled failure status: $status" }
                 }
             }
         }

@@ -55,5 +55,5 @@ enum class ActionType {
  * Represents possible state of a [PackageAction]
  */
 enum class ActionStatus {
-    INITIALIZED, COMMITTED, PENDING_USER_ACTION, SUCCESS, FAILURE
+    INITIALIZED, COMMITTED, PENDING_USER_ACTION, SUCCESS, FAILURE, UNKNOWN, CANCELLATION
 }

@@ -17,8 +17,9 @@ package com.samples.appinstaller.store
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.samples.appinstaller.AppSettings
 import com.samples.appinstaller.R
+import com.samples.appinstaller.database.ActionStatus
+import com.samples.appinstaller.database.PackageInstallerDao
 import com.samples.appinstaller.settings.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +70,8 @@ private val internalStoreApps = listOf(
 @Singleton
 class LibraryRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    settings: SettingsRepository
+    settings: SettingsRepository,
+    database: PackageInstallerDao,
 ) {
     companion object {
         val storeApps = internalStoreApps
@@ -85,20 +87,48 @@ class LibraryRepository @Inject constructor(
      * in our store) with the apps being installed or upgraded to get the most up-to-date
      * library state
      */
-    val apps = _apps.combine(settings.appSettings.data) { currentApps, settings ->
+//    val apps = _apps.combine(settings.appSettings.data) { currentApps, settings ->
+//
+//        currentApps.mapValues {
+//            val packageName = it.key
+//            val app = it.value
+//
+//            when (settings.packageActionsMap[packageName]?.packageActionType) {
+//                AppSettings.PackageActionType.INSTALLING -> app.copy(status = AppStatus.INSTALLING)
+//                AppSettings.PackageActionType.UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
+//                AppSettings.PackageActionType.UPGRADING -> app.copy(status = AppStatus.UPGRADING)
+//                AppSettings.PackageActionType.PENDING_USER_INSTALLING -> app.copy(status = AppStatus.INSTALLING)
+//                AppSettings.PackageActionType.PENDING_USER_UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
+//                AppSettings.PackageActionType.PENDING_USER_UPGRADING -> app.copy(status = AppStatus.UPGRADING)
+//                AppSettings.PackageActionType.UNRECOGNIZED,
+//                null -> {
+//                    val installTime = getPackageInstallTime(app.packageName)
+//
+//                    if (installTime > -1) {
+//                        app.copy(status = AppStatus.INSTALLED, updatedAt = installTime)
+//                    } else {
+//                        app
+//                    }
+//                }
+//            }
+//        }.toSortedMap()
+//    }
+    val apps = _apps.combine(database.getActionsByPackage()) { currentApps, packageActions ->
 
         currentApps.mapValues {
             val packageName = it.key
             val app = it.value
+            val action = packageActions[packageName]
 
-            when (settings.packageActionsMap[packageName]?.packageActionType) {
-                AppSettings.PackageActionType.INSTALLING -> app.copy(status = AppStatus.INSTALLING)
-                AppSettings.PackageActionType.UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
-                AppSettings.PackageActionType.UPGRADING -> app.copy(status = AppStatus.UPGRADING)
-                AppSettings.PackageActionType.PENDING_USER_INSTALLING -> app.copy(status = AppStatus.INSTALLING)
-                AppSettings.PackageActionType.PENDING_USER_UNINSTALLING -> app.copy(status = AppStatus.UNINSTALLING)
-                AppSettings.PackageActionType.PENDING_USER_UPGRADING -> app.copy(status = AppStatus.UPGRADING)
-                AppSettings.PackageActionType.UNRECOGNIZED,
+            when (action?.status) {
+                ActionStatus.COMMITTED,
+                ActionStatus.INITIALIZED,
+                ActionStatus.PENDING_USER_ACTION -> app.copy(status = AppStatus.INSTALLING)
+
+                ActionStatus.SUCCESS,
+                ActionStatus.FAILURE,
+                ActionStatus.UNKNOWN,
+                ActionStatus.CANCELLATION,
                 null -> {
                     val installTime = getPackageInstallTime(app.packageName)
 
