@@ -11,6 +11,7 @@ datastore = "1.0.0"
 dagger = "2.38.1"
 hilt = "1.0.0"
 workmanager = "2.7.1"
+room = "2.3.0"
 logcat = "0.1"
 junit = "4.13.2"
 androidx-test-junit = "1.1.3"
@@ -39,6 +40,9 @@ hilt-androidCompiler = { module = "com.google.dagger:hilt-android-compiler", ver
 hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt" }
 hilt-workCompiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt" }
 workmanager-runtimeKtx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 logcat = { module = "com.squareup.logcat:logcat", version.ref = "logcat" }
 
 junit = { module = "junit:junit", version.ref = "junit" }

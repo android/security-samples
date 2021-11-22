@@ -88,10 +88,9 @@ dependencies {
     implementation(libs.protobuf.javalite)
     implementation(libs.datastore)
 
-    val roomVersion = "2.3.0"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
+    implementation(libs.room.runtime)
+    kapt(libs.room.compiler)
+    implementation(libs.room.ktx)
 
     implementation(libs.hilt.android)
     kapt(libs.hilt.androidCompiler)
