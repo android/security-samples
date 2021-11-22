@@ -71,6 +71,14 @@ fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
                     }
                 )
                 BottomNavigationItem(
+                    icon = { Icon(Route.Logs.icon, contentDescription = null) },
+                    label = { Text(Route.Logs.title) },
+                    selected = false,
+                    onClick = {
+                        navController.navigate(Route.Logs.id)
+                    }
+                )
+                BottomNavigationItem(
                     icon = { Icon(Route.Settings.icon, contentDescription = null) },
                     label = { Text(Route.Settings.title) },
                     selected = true,
