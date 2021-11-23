@@ -37,6 +37,12 @@ interface PackageInstallerDao {
     }
 
     /**
+     * Get actions older created earlier than a defined time
+     */
+    @Query("SELECT * FROM package_actions WHERE status = 'INITIALIZED' AND created_at < :currentTime")
+    suspend fun getObsoleteActions(currentTime: Long): List<PackageAction>
+
+    /**
      * Get [PackageAction] only if they're set to PENDING_USER_ACTION
      */
     @Query("SELECT * FROM package_actions WHERE status = 'PENDING_USER_ACTION' ORDER BY created_at ASC")
@@ -57,7 +63,7 @@ interface PackageInstallerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAction(action: PackageAction)
 
-    @Insert()
+    @Insert
     suspend fun insertLog(log: PackageActionLog)
 
     /**

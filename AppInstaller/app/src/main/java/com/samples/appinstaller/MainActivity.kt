@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
          */
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.cleanObsoleteSessions()
                 viewModel.redeliverSavedUserActions()
             }
         }

@@ -51,6 +51,10 @@ class InstallWorker @AssistedInject constructor(
             ?: return@coroutineScope Result.failure()
 
         try {
+            /**
+             * WorkManager retries stopped tasks if they've been terminated by the system.
+             * We prefer to drop the task instead if the current execution is a retry
+             */
             if (runAttemptCount >= 1) {
                 database.addAction(
                     packageName = packageName,

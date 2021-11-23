@@ -92,6 +92,26 @@ class PackageInstallerRepository @Inject constructor(
     }
 
     /**
+     * Clean obsolete sessions (initialized worker tasks terminated by the system without clearing
+     * their install state)
+     */
+    fun cleanObsoleteSessions() {
+        val obsoleteDelay = System.currentTimeMillis() - 60_000L
+        runBlocking {
+            database.getObsoleteActions(obsoleteDelay).forEach { packageAction ->
+                WorkManager.getInstance(context).cancelAllWorkByTag(packageAction.packageName)
+
+                database.addAction(
+                    packageName = packageAction.packageName,
+                    type = ActionType.INSTALL,
+                    sessionId = packageAction.sessionId,
+                    status = ActionStatus.FAILURE,
+                )
+            }
+        }
+    }
+
+    /**
      * Add saved pending intents to the [pendingUserActionQueue]
      */
     fun redeliverSavedUserActions() {
