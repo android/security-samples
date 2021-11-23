@@ -85,7 +85,4 @@ interface PackageInstallerDao {
 
     @Query("SELECT * FROM action_logs ORDER BY created_at DESC")
     fun getAllLogs(): Flow<List<PackageActionLog>>
-
-    @Query("DELETE FROM package_actions WHERE created_at < :time")
-    suspend fun cleanOldActions(time: Long): Int
 }

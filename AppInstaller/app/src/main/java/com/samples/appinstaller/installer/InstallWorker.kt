@@ -23,7 +23,6 @@ import androidx.work.WorkerParameters
 import com.samples.appinstaller.database.ActionStatus
 import com.samples.appinstaller.database.ActionType
 import com.samples.appinstaller.database.PackageInstallerDao
-import com.samples.appinstaller.settings.SettingsRepository
 import com.samples.appinstaller.store.PackageName
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -38,7 +37,6 @@ class InstallWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val installer: PackageInstallerRepository,
-    private val settings: SettingsRepository,
     private val database: PackageInstallerDao,
 ) : CoroutineWorker(context, workerParams) {
 
@@ -53,6 +51,15 @@ class InstallWorker @AssistedInject constructor(
             ?: return@coroutineScope Result.failure()
 
         try {
+            if (runAttemptCount >= 1) {
+                database.addAction(
+                    packageName = packageName,
+                    type = ActionType.INSTALL,
+                    status = ActionStatus.CANCELLATION,
+                )
+                return@coroutineScope Result.failure()
+            }
+
             logcat { "Installing: $packageName" }
             // We ask PackageInstaller to create an install session
             val sessionId = installer.createInstallSession(packageName)

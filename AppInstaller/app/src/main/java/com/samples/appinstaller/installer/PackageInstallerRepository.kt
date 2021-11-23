@@ -91,15 +91,6 @@ class PackageInstallerRepository @Inject constructor(
         pendingUserActionQueue.poll()
     }
 
-    fun cleanOldSessions() {
-        runBlocking {
-            // Delete uncommitted sessions older than 60 seconds
-            val deletedSessionsCount =
-                database.cleanOldActions(System.currentTimeMillis() - 60_000L)
-            logcat { "Deleted old sessions ($deletedSessionsCount)" }
-        }
-    }
-
     /**
      * Add saved pending intents to the [pendingUserActionQueue]
      */
