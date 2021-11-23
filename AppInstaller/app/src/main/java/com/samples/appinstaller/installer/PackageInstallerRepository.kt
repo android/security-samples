@@ -25,6 +25,7 @@ import android.net.Uri
 import androidx.core.os.BuildCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -93,7 +94,8 @@ class PackageInstallerRepository @Inject constructor(
     fun cleanOldSessions() {
         runBlocking {
             // Delete uncommitted sessions older than 60 seconds
-            val deletedSessionsCount = database.cleanOldActions(System.currentTimeMillis() - 60_000L)
+            val deletedSessionsCount =
+                database.cleanOldActions(System.currentTimeMillis() - 60_000L)
             logcat { "Deleted old sessions ($deletedSessionsCount)" }
         }
     }
@@ -207,7 +209,8 @@ class PackageInstallerRepository @Inject constructor(
             .setInputData(workDataOf(InstallWorker.PACKAGE_NAME_KEY to packageName))
             .build()
 
-        WorkManager.getInstance(context).enqueue(installWorkRequest)
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(packageName, ExistingWorkPolicy.KEEP, installWorkRequest)
     }
 
     /**
