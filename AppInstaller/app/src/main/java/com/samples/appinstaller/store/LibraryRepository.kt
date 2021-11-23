@@ -108,12 +108,17 @@ class LibraryRepository @Inject constructor(
                 ActionStatus.UNKNOWN,
                 ActionStatus.CANCELLATION,
                 null -> {
-                    val installTime = getPackageInstallTime(app.packageName)
-
-                    if (installTime > -1) {
-                        app.copy(status = AppStatus.INSTALLED, updatedAt = installTime)
+                    if (action?.status == ActionStatus.SUCCESS && action.type == ActionType.UNINSTALL) {
+                        app.copy(status = AppStatus.UNINSTALLED, updatedAt = -1)
                     } else {
-                        app
+
+                        val installTime = getPackageInstallTime(app.packageName)
+
+                        if (installTime > -1) {
+                            app.copy(status = AppStatus.INSTALLED, updatedAt = installTime)
+                        } else {
+                            app
+                        }
                     }
                 }
             }
