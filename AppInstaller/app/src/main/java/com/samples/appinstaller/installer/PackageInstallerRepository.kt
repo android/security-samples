@@ -395,6 +395,15 @@ class PackageInstallerRepository @Inject constructor(
         }
     }
 
+    private fun clearInstallNotificationOnComplete() {
+        runBlocking {
+            val pendingUserActions = database.getPendingUserActions()
+            if (pendingUserActions.isEmpty()) {
+                cancelInstallNotification()
+            }
+        }
+    }
+
     fun cancelInstallNotification() {
         notificationRepository.cancelInstallNotification()
     }
@@ -417,6 +426,7 @@ class PackageInstallerRepository @Inject constructor(
         }
 
         cancelStatusPendingIntent(packageName)
+        clearInstallNotificationOnComplete()
     }
 
     fun onUninstallComplete(packageName: PackageName, status: ActionStatus, sessionId: Int) {
@@ -430,5 +440,6 @@ class PackageInstallerRepository @Inject constructor(
         }
 
         cancelStatusPendingIntent(packageName)
+        clearInstallNotificationOnComplete()
     }
 }
