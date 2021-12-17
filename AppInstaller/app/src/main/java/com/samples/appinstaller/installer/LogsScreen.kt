@@ -28,7 +28,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,12 +41,6 @@ import com.samples.appinstaller.database.ActionStatus
 
 @Composable
 fun LogsScreen(navController: NavController, viewModel: AppViewModel) {
-    LaunchedEffect(viewModel.canInstallPackages) {
-        if (!viewModel.canInstallPackages) {
-            navController.navigate(Route.Permission.id)
-        }
-    }
-
     val logs by viewModel.logs.collectAsState(initial = emptyList())
 
     Scaffold(

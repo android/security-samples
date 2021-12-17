@@ -33,7 +33,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,12 +49,6 @@ import com.samples.appinstaller.Route
 
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
-    LaunchedEffect(viewModel.canInstallPackages) {
-        if (!viewModel.canInstallPackages) {
-            navController.navigate(Route.Permission.id)
-        }
-    }
-
     val settings by viewModel.appSettings.collectAsState()
 
     Scaffold(

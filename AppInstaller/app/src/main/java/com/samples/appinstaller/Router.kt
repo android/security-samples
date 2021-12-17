@@ -32,9 +32,8 @@ fun Router(viewModel: AppViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = if (viewModel.canInstallPackages) Route.Store.id else Route.Permission.id
+        startDestination = Route.Store.id
     ) {
-        composable(Route.Permission.id) { PermissionScreen(navController, viewModel) }
         composable(Route.Store.id) { StoreScreen(navController, viewModel) }
         composable(Route.Settings.id) { SettingsScreen(navController, viewModel) }
         composable(Route.Logs.id) { LogsScreen(navController, viewModel) }
@@ -42,7 +41,6 @@ fun Router(viewModel: AppViewModel) {
 }
 
 sealed class Route(val id: String) {
-    object Permission : Route("permission")
     object Store : Route("store") {
         val icon = Icons.Filled.Home
         const val title = "Demo Store"

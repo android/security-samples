@@ -15,6 +15,10 @@
  */
 package com.samples.appinstaller.store
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,6 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
@@ -40,48 +45,74 @@ import androidx.compose.material.ListItem
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.samples.appinstaller.AppViewModel
+import com.samples.appinstaller.BuildConfig
 import com.samples.appinstaller.R
 import com.samples.appinstaller.Route
 
 @Composable
 fun StoreScreen(navController: NavController, viewModel: AppViewModel) {
-    LaunchedEffect(viewModel.canInstallPackages) {
-        if (!viewModel.canInstallPackages) {
-            navController.navigate(Route.Permission.id)
-        }
-    }
-
     val appsMap by viewModel.apps.collectAsState(sortedMapOf())
 
     val apps by remember(appsMap) { derivedStateOf { appsMap.values.toList() } }
+    var openPermissionDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    fun install(app: AppPackage) = viewModel.installApp(app.packageName)
+    fun checkPermission(callback: () -> Unit) {
+        if (!viewModel.canInstallPackages) {
+            openPermissionDialog = true
+        } else {
+            callback()
+        }
+    }
+
     /**
      * Upgrading is following the same process as install. In this case, we re-install with the same
      * APK but in a production app, we would fetch a newer version of the app APK and do the same
      * steps as an install
      */
-    fun upgrade(app: AppPackage) = viewModel.installApp(app.packageName)
-    fun uninstall(app: AppPackage) = viewModel.uninstallApp(app.packageName)
+    fun upgrade(app: AppPackage) = checkPermission { viewModel.installApp(app.packageName) }
+    fun install(app: AppPackage) = checkPermission { viewModel.installApp(app.packageName) }
+    fun uninstall(app: AppPackage) = checkPermission { viewModel.uninstallApp(app.packageName) }
     fun open(app: AppPackage) = viewModel.openApp(app.packageName)
     fun cancel(app: AppPackage) = viewModel.cancelInstall(app.packageName)
+
+    if (openPermissionDialog) {
+        AlertDialog(
+            title = { Text(stringResource(R.string.authorization_dialog_title)) },
+            text = { Text(stringResource(R.string.authorization_dialog_description)) },
+            confirmButton = {
+                TextButton(onClick = { openPermissionDialog = false; requestPermission(context) }) {
+                    Text(stringResource(R.string.authorization_dialog_confirm_label))
+                }
+            },
+            onDismissRequest = { openPermissionDialog = false },
+            dismissButton = {
+                TextButton(onClick = { openLearnMoreLink(context) }) {
+                    Text(stringResource(R.string.authorization_dialog_learn_more_label))
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -240,4 +271,21 @@ fun AppItem(
         LinearProgressIndicator(Modifier.fillMaxWidth())
     }
     Divider()
+}
+
+private fun requestPermission(context: Context) {
+    val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+    }
+
+    context.startActivity(intent)
+}
+
+private fun openLearnMoreLink(context: Context) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data =
+            Uri.parse("https://developer.android.com/reference/kotlin/android/content/pm/PackageInstaller")
+    }
+
+    context.startActivity(intent)
 }
