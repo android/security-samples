@@ -26,3 +26,7 @@ FIDO2 API is used for devices running Android N (API level 24) or newer.
 
 A sample that demonstrates how to use the Jetpack Security library to encrypt and decrypt files by
 implementing a simple note taking app.
+
+## Android Key Attestation Sample
+
+For a tool that illustrates how to use the Bouncy Castle ASN.1 parser to extract information from an Android attestation data structure to verify that a key pair has been generated in an Android device, check out this [repository](https://github.com/google/android-key-attestation).
