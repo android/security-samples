@@ -26,6 +26,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityEnableBiometricLoginBinding
+import com.uepay.authenticate.biometric.CryptographyManager
 
 class EnableBiometricLoginActivity : AppCompatActivity() {
     private val TAG = "EnableBiometricLogin"

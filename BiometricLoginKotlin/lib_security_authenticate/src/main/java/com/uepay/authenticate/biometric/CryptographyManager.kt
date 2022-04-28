@@ -14,18 +14,23 @@
  * limitations under the License
  */
 
-package com.example.biometricloginsample
+package com.uepay.authenticate.biometric
 
 import android.content.Context
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import com.google.gson.Gson
 import java.nio.charset.Charset
+import java.security.KeyPair
+import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.PrivateKey
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.OAEPParameterSpec
 
 /**
  * Handles encryption and decryption
@@ -71,16 +76,17 @@ fun CryptographyManager(): CryptographyManager = CryptographyManagerImpl()
  */
 private class CryptographyManagerImpl : CryptographyManager {
 
-    private val KEY_SIZE = 256
+    private val KEY_SIZE = 1024 //256
     private val ANDROID_KEYSTORE = "AndroidKeyStore"
-    private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
-    private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
-    private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
+    private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_ECB
+    private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_RSA_OAEP
+    private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_RSA
 
     override fun getInitializedCipherForEncryption(keyName: String): Cipher {
         val cipher = getCipher()
-        val secretKey = getOrCreateSecretKey(keyName)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+//        val secretKey = getOrCreateSecretKey(keyName)
+        val keyPair = getOrCreateKeyPair(keyName)
+        cipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
         return cipher
     }
 
@@ -88,15 +94,17 @@ private class CryptographyManagerImpl : CryptographyManager {
         keyName: String,
         initializationVector: ByteArray
     ): Cipher {
-        val cipher = getCipher()
-        val secretKey = getOrCreateSecretKey(keyName)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, initializationVector))
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+//        val cipher = getCipher()
+//        val secretKey = getOrCreateSecretKey(keyName)
+        val keyPair = getOrCreateKeyPair(keyName)
+        cipher.init(Cipher.DECRYPT_MODE, keyPair.private)
         return cipher
     }
 
     override fun encryptData(plaintext: String, cipher: Cipher): CiphertextWrapper {
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charset.forName("UTF-8")))
-        return CiphertextWrapper(ciphertext, cipher.iv)
+        return CiphertextWrapper(ciphertext, cipher.iv ?: byteArrayOf(0))
     }
 
     override fun decryptData(ciphertext: ByteArray, cipher: Cipher): String {
@@ -106,7 +114,7 @@ private class CryptographyManagerImpl : CryptographyManager {
 
     private fun getCipher(): Cipher {
         val transformation = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
-        return Cipher.getInstance(transformation)
+        return Cipher.getInstance(transformation,"AndroidKeyStoreBCWorkaround") // "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
     }
 
     private fun getOrCreateSecretKey(keyName: String): SecretKey {
@@ -136,6 +144,36 @@ private class CryptographyManagerImpl : CryptographyManager {
         return keyGenerator.generateKey()
     }
 
+    private fun getOrCreateKeyPair(keyName: String): KeyPair {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+        keyStore.load(null) // Keystore must be loaded before it can be accessed
+        keyStore.getKey(keyName, null)?.let {
+            val privateKey = it as PrivateKey
+            val publicKey = keyStore.getCertificate(keyName).publicKey
+            return KeyPair(publicKey, privateKey)
+        }
+
+        val keyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance(
+            ENCRYPTION_ALGORITHM, ANDROID_KEYSTORE
+        )
+        val keyProperties =
+            KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_SIGN
+        val builder = KeyGenParameterSpec.Builder(keyName, keyProperties)
+            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+            .setUserAuthenticationRequired(true)
+//            .setBlockModes(ENCRYPTION_BLOCK_MODE)
+            .setKeySize(KEY_SIZE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.setInvalidatedByBiometricEnrollment(true)
+        }
+        keyPairGenerator.initialize(builder.build())
+        val keyPair: KeyPair = keyPairGenerator.generateKeyPair()
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+        cipher.init(Cipher.DECRYPT_MODE, keyPair.private)
+        return keyPair
+    }
+
     override fun persistCiphertextWrapperToSharedPrefs(
         ciphertextWrapper: CiphertextWrapper,
         context: Context,
@@ -157,6 +195,3 @@ private class CryptographyManagerImpl : CryptographyManager {
         return Gson().fromJson(json, CiphertextWrapper::class.java)
     }
 }
-
-
-data class CiphertextWrapper(val ciphertext: ByteArray, val initializationVector: ByteArray)

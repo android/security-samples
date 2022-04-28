@@ -18,6 +18,7 @@ package com.example.biometricloginsample
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
@@ -27,6 +28,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityLoginBinding
+import com.uepay.authenticate.biometric.CryptographyManager
 
 /**
  * 1) after entering "valid" username and password, login button becomes enabled
