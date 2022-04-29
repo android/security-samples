@@ -1,3 +1,5 @@
+package com.example.biometricloginsample
+
 /*
  * Copyright (C) 2020 Google Inc. All Rights Reserved.
  *
@@ -13,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.biometricloginsample
 
 const val SHARED_PREFS_FILENAME = "biometric_prefs"
 const val CIPHERTEXT_WRAPPER = "ciphertext_wrapper"

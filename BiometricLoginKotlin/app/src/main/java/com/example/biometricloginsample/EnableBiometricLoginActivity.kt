@@ -17,6 +17,7 @@ package com.example.biometricloginsample
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
@@ -26,6 +27,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
 import com.example.biometricloginsample.databinding.ActivityEnableBiometricLoginBinding
+import com.uepay.authenticate.biometric.CipherWrapper
 import com.uepay.authenticate.biometric.CryptographyManager
 
 class EnableBiometricLoginActivity : AppCompatActivity() {
@@ -82,21 +84,28 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
         }
     }
 
+    lateinit var cipherWrapper: CipherWrapper
+
     private fun showBiometricPromptForEncryption() {
         val canAuthenticate = BiometricManager.from(applicationContext).canAuthenticate()
         if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
             val secretKeyName = getString(R.string.secret_key_name)
             cryptographyManager = CryptographyManager()
-            val cipher = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
+            cipherWrapper = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
             val biometricPrompt =
                 BiometricPromptUtils.createBiometricPrompt(this, ::encryptAndStoreServerToken)
             val promptInfo = BiometricPromptUtils.createPromptInfo(this)
-            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipherWrapper.cipher))
         }
     }
 
     private fun encryptAndStoreServerToken(authResult: BiometricPrompt.AuthenticationResult) {
         authResult.cryptoObject?.cipher?.apply {
+
+            cipherWrapper?.let {
+                Log.d(TAG, "publicKey: " + Base64.encodeToString(it.publicKey, 0))
+            }
+
             SampleAppUser.fakeToken?.let { token ->
                 Log.d(TAG, "The token from server is $token")
                 val encryptedServerTokenWrapper = cryptographyManager.encryptData(token, this)

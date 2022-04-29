@@ -1,43 +1,23 @@
-/*
- * Copyright (C) 2020 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License
- */
-
 package com.uepay.authenticate.biometric
 
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Base64
 import com.google.gson.Gson
 import java.nio.charset.Charset
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.PrivateKey
+import java.security.*
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.OAEPParameterSpec
 
 /**
  * Handles encryption and decryption
  */
 interface CryptographyManager {
 
-    fun getInitializedCipherForEncryption(keyName: String): Cipher
+    fun getInitializedCipherForEncryption(keyName: String): CipherWrapper
 
     fun getInitializedCipherForDecryption(keyName: String, initializationVector: ByteArray): Cipher
 
@@ -50,6 +30,10 @@ interface CryptographyManager {
      * The Cipher created with [getInitializedCipherForDecryption] is used here
      */
     fun decryptData(ciphertext: ByteArray, cipher: Cipher): String
+
+    fun sign(keyName: String, text: String): String
+
+    fun verify(keyName: String, srcData: String, signedData: String): Boolean
 
     fun persistCiphertextWrapperToSharedPrefs(
         ciphertextWrapper: CiphertextWrapper,
@@ -78,25 +62,25 @@ private class CryptographyManagerImpl : CryptographyManager {
 
     private val KEY_SIZE = 1024 //256
     private val ANDROID_KEYSTORE = "AndroidKeyStore"
+    private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_RSA
     private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_ECB
     private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_RSA_OAEP
-    private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_RSA
 
-    override fun getInitializedCipherForEncryption(keyName: String): Cipher {
-        val cipher = getCipher()
-//        val secretKey = getOrCreateSecretKey(keyName)
+    private val TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+    private val SIGNATURE_ALGORITEM = "SHA256withRSA/PSS"
+
+    override fun getInitializedCipherForEncryption(keyName: String): CipherWrapper {
+        val cipher = getCipher("AndroidKeyStoreBCWorkaround")
         val keyPair = getOrCreateKeyPair(keyName)
         cipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
-        return cipher
+        return CipherWrapper(cipher, keyPair.public.encoded)
     }
 
     override fun getInitializedCipherForDecryption(
         keyName: String,
         initializationVector: ByteArray
     ): Cipher {
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
-//        val cipher = getCipher()
-//        val secretKey = getOrCreateSecretKey(keyName)
+        val cipher = getCipher("")
         val keyPair = getOrCreateKeyPair(keyName)
         cipher.init(Cipher.DECRYPT_MODE, keyPair.private)
         return cipher
@@ -112,9 +96,27 @@ private class CryptographyManagerImpl : CryptographyManager {
         return String(plaintext, Charset.forName("UTF-8"))
     }
 
-    private fun getCipher(): Cipher {
-        val transformation = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
-        return Cipher.getInstance(transformation,"AndroidKeyStoreBCWorkaround") // "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+    override fun sign(keyName: String, text: String): String {
+        val keyPair = getOrCreateKeyPair(keyName)
+        val signature = Signature.getInstance(SIGNATURE_ALGORITEM)
+        signature.initSign(keyPair.private)
+        signature.update(text.toByteArray())
+        return Base64.encodeToString(signature.sign(), Base64.DEFAULT)
+    }
+
+    override fun verify(keyName: String, srcData: String, signedData: String): Boolean {
+        val keyPair = getOrCreateKeyPair(keyName)
+        val signature = Signature.getInstance(SIGNATURE_ALGORITEM)
+        signature.initVerify(keyPair.public)
+        signature.update(srcData.toByteArray())
+        return signature.verify(Base64.decode(signedData, Base64.DEFAULT))
+    }
+
+    private fun getCipher(provider: String): Cipher {
+        return if (provider.isEmpty())
+            Cipher.getInstance(TRANSFORMATION)
+        else
+            Cipher.getInstance(TRANSFORMATION, "AndroidKeyStoreBCWorkaround")
     }
 
     private fun getOrCreateSecretKey(keyName: String): SecretKey {
@@ -161,17 +163,12 @@ private class CryptographyManagerImpl : CryptographyManager {
         val builder = KeyGenParameterSpec.Builder(keyName, keyProperties)
             .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
-            .setUserAuthenticationRequired(true)
-//            .setBlockModes(ENCRYPTION_BLOCK_MODE)
+            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS)
+            .setUserAuthenticationRequired(false)
+            .setBlockModes(ENCRYPTION_BLOCK_MODE)
             .setKeySize(KEY_SIZE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            builder.setInvalidatedByBiometricEnrollment(true)
-        }
         keyPairGenerator.initialize(builder.build())
-        val keyPair: KeyPair = keyPairGenerator.generateKeyPair()
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
-        cipher.init(Cipher.DECRYPT_MODE, keyPair.private)
-        return keyPair
+        return keyPairGenerator.generateKeyPair()
     }
 
     override fun persistCiphertextWrapperToSharedPrefs(

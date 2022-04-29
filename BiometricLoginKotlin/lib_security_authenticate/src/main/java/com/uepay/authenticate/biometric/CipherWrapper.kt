@@ -1,6 +1,5 @@
 package com.uepay.authenticate.biometric
 
-import java.security.PublicKey
 import javax.crypto.Cipher
 
 /**
@@ -9,4 +8,4 @@ import javax.crypto.Cipher
  *
  * Copyright (c) 2022 UePay.mo All rights reserved.
  */
-data class CipherWrapper(val cipher: Cipher, val publicKey: PublicKey)
+data class CipherWrapper(val cipher: Cipher, val publicKey: ByteArray)

@@ -108,6 +108,7 @@ class LoginActivity : AppCompatActivity() {
     private fun decryptServerTokenFromStorage(authResult: BiometricPrompt.AuthenticationResult) {
         ciphertextWrapper?.let { textWrapper ->
             authResult.cryptoObject?.cipher?.let {
+
                 val plaintext =
                     cryptographyManager.decryptData(textWrapper.ciphertext, it)
                 SampleAppUser.fakeToken = plaintext
@@ -116,7 +117,15 @@ class LoginActivity : AppCompatActivity() {
                 // the server. In your case, you will have gotten it from the server the first time
                 // and therefore, it's a real token.
 
-                updateApp(getString(R.string.already_signedin))
+//                updateApp(getString(R.string.already_signedin))
+                updateApp("login success : $plaintext")
+
+                val secretKeyName = getString(R.string.secret_key_name)
+                val signedData = cryptographyManager.sign(secretKeyName, plaintext)
+                Log.d(TAG, "signed: $signedData")
+                val verification = cryptographyManager.verify(secretKeyName, plaintext, signedData)
+                Log.d(TAG, "verify: $verification")
+
             }
         }
     }
