@@ -24,6 +24,7 @@ import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Observer
@@ -88,7 +89,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showBiometricPromptForDecryption() {
         ciphertextWrapper?.let { textWrapper ->
-            val canAuthenticate = BiometricManager.from(applicationContext).canAuthenticate()
+            val canAuthenticate = BiometricManager.from(applicationContext).canAuthenticate(BIOMETRIC_STRONG)
             if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
                 val secretKeyName = getString(R.string.secret_key_name)
                 val cipher = cryptographyManager.getInitializedCipherForDecryption(

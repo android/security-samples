@@ -18,6 +18,7 @@ package com.example.biometricloginsample
 
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 
@@ -58,5 +59,6 @@ object BiometricPromptUtils {
             setDescription(activity.getString(R.string.prompt_info_description))
             setConfirmationRequired(false)
             setNegativeButtonText(activity.getString(R.string.prompt_info_use_app_password))
+            setAllowedAuthenticators(BIOMETRIC_STRONG)
         }.build()
 }
