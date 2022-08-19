@@ -9,10 +9,7 @@ import com.uepay.authenticate.biometric.CryptographyManager;
 import com.uepay.authenticate.biometric.CryptographyManagerKt;
 
 /**
- * Created by zsg on 2022/8/19.
  * Desc: Java代碼調用示例
- * <p>
- * Copyright (c) 2022 UePay.mo All rights reserved.
  */
 public class BiometricLoginActivity extends AppCompatActivity {
 
@@ -23,5 +20,6 @@ public class BiometricLoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         cryptographyManager = CryptographyManagerKt.CryptographyManager();
         cryptographyManager.getInitializedCipherForEncryption("secretKeyName");
+        cryptographyManager.sign("secretKeyName","hello");
     }
 }
