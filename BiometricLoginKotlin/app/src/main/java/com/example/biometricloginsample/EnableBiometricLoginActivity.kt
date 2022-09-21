@@ -106,9 +106,16 @@ class EnableBiometricLoginActivity : AppCompatActivity() {
                 Log.d(TAG, "publicKey: " + Base64.encodeToString(it.publicKey, 0))
             }
 
+            val text = "{\"avatarImg\":\"2221\",\"loginName\":\"11111111111111111111111111111111111111111111111111111111111111\",\"millis\":1663727668748,\"token\":\"3331\"}"
+
+            val encryptedText = cryptographyManager.encryptDataWithBlock(text, this)
+
+            Log.d(TAG, "encryptedText: ${encryptedText.ciphertext}")
+
+
             SampleAppUser.fakeToken?.let { token ->
                 Log.d(TAG, "The token from server is $token")
-                val encryptedServerTokenWrapper = cryptographyManager.encryptData(token, this)
+                val encryptedServerTokenWrapper = cryptographyManager.encryptDataWithBlock(token, this)
                 cryptographyManager.persistCiphertextWrapperToSharedPrefs(
                     encryptedServerTokenWrapper,
                     applicationContext,

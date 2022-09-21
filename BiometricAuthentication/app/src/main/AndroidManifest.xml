@@ -31,6 +31,7 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity
+            android:exported="true"
             android:name="com.example.android.biometricauth.MainActivity"
             android:label="@string/application_name"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
