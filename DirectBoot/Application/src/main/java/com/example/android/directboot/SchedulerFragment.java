@@ -21,6 +21,7 @@ import com.example.android.directboot.alarms.AlarmAdapter;
 import com.example.android.directboot.alarms.AlarmIntentService;
 import com.example.android.directboot.alarms.AlarmStorage;
 import com.example.android.directboot.alarms.AlarmUtil;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -28,16 +29,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Fragment that registers scheduled alarms.
