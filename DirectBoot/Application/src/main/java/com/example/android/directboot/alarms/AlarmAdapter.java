@@ -69,8 +69,8 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     }
 
     @Override
-    public void onBindViewHolder(AlarmViewHolder holder,@SuppressLint("RecyclerView")  final int position) {
-        Alarm alarm = mAlarmList.get(holder.getAdapterPosition());
+    public void onBindViewHolder(final AlarmViewHolder holder, final int position) {
+        Alarm alarm = mAlarmList.get(position);
         Calendar alarmTime = Calendar.getInstance();
         alarmTime.set(Calendar.MONTH, alarm.month);
         alarmTime.set(Calendar.DATE, alarm.date);
@@ -80,11 +80,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                 .setText(mTimeFormat.format(alarmTime.getTime()));
         holder.mAlarmDateTextView
                 .setText(mDateFormat.format(alarmTime.getTime()));
+
         holder.mDeleteImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Alarm toBeDeleted = mAlarmList.get(position);
-                mAlarmList.removeItemAt(position);
+                final int lastPosition = holder.getAdapterPosition();
+                Alarm toBeDeleted = mAlarmList.get(lastPosition);
+                mAlarmList.removeItemAt(lastPosition);
                 mAlarmStorage.deleteAlarm(toBeDeleted);
                 mAlarmUtil.cancelAlarm(toBeDeleted);
                 notifyDataSetChanged();
