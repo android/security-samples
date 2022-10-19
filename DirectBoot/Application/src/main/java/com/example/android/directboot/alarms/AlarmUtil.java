@@ -78,7 +78,7 @@ public class AlarmUtil {
     public void cancelAlarm(Alarm alarm) {
         Intent intent = new Intent(mContext, AlarmIntentService.class);
         PendingIntent pendingIntent = PendingIntent
-            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT| FLAG_IMMUTABLE);
         mAlarmManager.cancel(pendingIntent);
     }
 
