@@ -72,7 +72,7 @@ class ListFragment : Fragment(), FileAdapter.FileAdapterListener {
         binding.recyclerView.adapter = adapter
 
         // Observe this app's files directory to be displayed as a list.
-        DirectoryLiveData(requireContext().filesDir).observe(this@ListFragment) { newList ->
+        DirectoryLiveData(requireContext().filesDir).observe(viewLifecycleOwner) { newList ->
             adapter.submitList(newList)
         }
     }

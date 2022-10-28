@@ -16,6 +16,8 @@
 
 package com.example.android.directboot.alarms;
 
+import static android.app.PendingIntent.FLAG_IMMUTABLE;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -50,7 +52,7 @@ public class AlarmUtil {
         intent.putExtras(extras);
 
         PendingIntent pendingIntent = PendingIntent
-            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT| FLAG_IMMUTABLE);
         Calendar alarmTime = Calendar.getInstance();
         alarmTime.set(Calendar.MONTH, alarm.month);
         alarmTime.set(Calendar.DATE, alarm.date);
@@ -76,7 +78,7 @@ public class AlarmUtil {
     public void cancelAlarm(Alarm alarm) {
         Intent intent = new Intent(mContext, AlarmIntentService.class);
         PendingIntent pendingIntent = PendingIntent
-            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            .getService(mContext, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT| FLAG_IMMUTABLE);
         mAlarmManager.cancel(pendingIntent);
     }
 
