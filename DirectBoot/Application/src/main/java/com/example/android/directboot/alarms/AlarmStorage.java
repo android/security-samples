@@ -18,7 +18,7 @@ package com.example.android.directboot.alarms;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.v4.os.BuildCompat;
+import androidx.core.os.BuildCompat;
 import android.util.Log;
 
 import java.security.SecureRandom;
