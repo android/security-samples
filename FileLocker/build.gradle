@@ -20,7 +20,7 @@ buildscript {
         constraint_layout_version = '2.0.4'
         coroutines_version = '1.4.3'
         espresso_version = '3.2.0'
-        gradleVersion = '4.2.1'
+        gradleVersion = '7.4.2'
         junit_version = '4.12'
         kotlin_version = '1.4.32'
         ktx_version = '1.5.0'
