@@ -19,3 +19,12 @@ storage that is always available while the device is booted.
 
 A sample that demonstrates how to use the Jetpack Security library to encrypt and decrypt files by
 implementing a simple note taking app.
+
+## ProGurad
+
+```pro
+# Protobuf
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+  <fields>;
+}
+```
