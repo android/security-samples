@@ -23,8 +23,8 @@ import com.example.android.directboot.alarms.AlarmUtil;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.os.BuildCompat;
-import android.support.v4.os.UserManagerCompat;
+import androidx.core.os.BuildCompat;
+import androidx.core.os.UserManagerCompat;
 import android.util.Log;
 
 /**

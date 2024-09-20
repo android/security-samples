@@ -18,17 +18,19 @@ package com.example.android.directboot.alarms;
 
 import com.example.android.directboot.R;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.support.v7.util.SortedList;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SortedList;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -67,7 +69,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     }
 
     @Override
-    public void onBindViewHolder(AlarmViewHolder holder, final int position) {
+    public void onBindViewHolder(final AlarmViewHolder holder, final int position) {
         Alarm alarm = mAlarmList.get(position);
         Calendar alarmTime = Calendar.getInstance();
         alarmTime.set(Calendar.MONTH, alarm.month);
@@ -78,11 +80,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                 .setText(mTimeFormat.format(alarmTime.getTime()));
         holder.mAlarmDateTextView
                 .setText(mDateFormat.format(alarmTime.getTime()));
+
         holder.mDeleteImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Alarm toBeDeleted = mAlarmList.get(position);
-                mAlarmList.removeItemAt(position);
+                final int lastPosition = holder.getAdapterPosition();
+                Alarm toBeDeleted = mAlarmList.get(lastPosition);
+                mAlarmList.removeItemAt(lastPosition);
                 mAlarmStorage.deleteAlarm(toBeDeleted);
                 mAlarmUtil.cancelAlarm(toBeDeleted);
                 notifyDataSetChanged();

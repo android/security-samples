@@ -1,11 +1,10 @@
-#
-# Copyright (C) 2019 The Android Open Source Project
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,17 +20,11 @@
 status:       PUBLISHED
 technologies: [Android]
 categories:   [Security]
-languages:    [Java]
+languages:    [Kotlin]
 solutions:    [Mobile]
 github:       android/security
 level:        INTERMEDIATE
 apiRefs:
-    - com.google.android.gms.fido.Fido
-    - com.google.android.gms.fido.fido2.Fido2ApiClient
-    - com.google.android.gms.fido.fido2.Fido2PendingIntent
-    - com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse
-    - com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse
-    - com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse
-    - com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions
-    - com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRequestOptions
+    - android:androidx.biometric.BiometricManager
+    - android:androidx.biometric.BiometricPrompt
 license: apache2

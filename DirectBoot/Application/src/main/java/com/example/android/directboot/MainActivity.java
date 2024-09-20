@@ -17,7 +17,7 @@
 package com.example.android.directboot;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Launcher Activity for the Direct Boot sample app.

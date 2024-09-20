@@ -166,7 +166,7 @@ class LoginActivity : AppCompatActivity() {
         binding.login.setOnClickListener {
             loginWithPasswordViewModel.login(
                 binding.username.text.toString(),
-                binding.login.text.toString()
+                binding.password.text.toString()
             )
         }
         Log.d(TAG, "Username ${SampleAppUser.username}; fake token ${SampleAppUser.fakeToken}")
