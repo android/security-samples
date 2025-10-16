@@ -30,6 +30,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build BiometricAuthentication
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
