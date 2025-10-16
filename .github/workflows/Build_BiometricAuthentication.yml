@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: BiometricLoginKotlin Build
+name: Build BiometricAuthentication
 
 on:
   push:
     branches: [ '*' ]
     paths:
-      - 'BiometricLoginKotlin/**'
-      - '.github/workflows/BiometricLoginKotlin_Build.yml'
+      - 'BiometricAuthentication/**'
+      - '.github/workflows/Build_BiometricAuthentication.yml'
   pull_request:
     branches: [ '*' ]
     paths:
-      - 'BiometricLoginKotlin/**'
-      - '.github/workflows/BiometricLoginKotlin_Build.yml'
+      - 'BiometricAuthentication/**'
+      - '.github/workflows/Build_BiometricAuthentication.yml'
   workflow_dispatch:
 
 concurrency:
@@ -32,13 +32,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build BiometricLoginKotlin
+    name: Build BiometricAuthentication
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     defaults:
       run:
-        working-directory: BiometricLoginKotlin
+        working-directory: BiometricAuthentication
 
     steps:
     - uses: actions/checkout@v4
@@ -59,4 +59,3 @@ jobs:
 
     - name: Build All
       run: ./gradlew build --stacktrace
-
