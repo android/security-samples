@@ -18,10 +18,12 @@ on:
     branches: [ '*' ]
     paths:
       - 'DirectBoot/**'
+      - '.github/workflows/DirectBoot_Build.yml'
   pull_request:
     branches: [ '*' ]
     paths:
       - 'DirectBoot/**'
+      - '.github/workflows/DirectBoot_Build.yml'
   workflow_dispatch:
 
 concurrency:
