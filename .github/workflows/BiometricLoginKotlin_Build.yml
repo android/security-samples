@@ -18,10 +18,12 @@ on:
     branches: [ '*' ]
     paths:
       - 'BiometricLoginKotlin/**'
+      - '.github/workflows/BiometricLoginKotlin_Build.yml'
   pull_request:
     branches: [ '*' ]
     paths:
       - 'BiometricLoginKotlin/**'
+      - '.github/workflows/BiometricLoginKotlin_Build.yml'
   workflow_dispatch:
 
 concurrency:

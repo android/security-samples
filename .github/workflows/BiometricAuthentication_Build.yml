@@ -18,10 +18,12 @@ on:
     branches: [ '*' ]
     paths:
       - 'BiometricAuthentication/**'
+      - '.github/workflows/BiometricAuthentication_Build.yml'
   pull_request:
     branches: [ '*' ]
     paths:
       - 'BiometricAuthentication/**'
+      - '.github/workflows/BiometricAuthentication_Build.yml'
   workflow_dispatch:
 
 concurrency:
