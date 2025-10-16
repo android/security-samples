@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: BiometricAuthentication Build
+name: Build DirectBoot
 
 on:
   push:
     branches: [ '*' ]
     paths:
-      - 'BiometricAuthentication/**'
-      - '.github/workflows/BiometricAuthentication_Build.yml'
+      - 'DirectBoot/**'
+      - '.github/workflows/Build_DirectBoot.yml'
   pull_request:
     branches: [ '*' ]
     paths:
-      - 'BiometricAuthentication/**'
-      - '.github/workflows/BiometricAuthentication_Build.yml'
+      - 'DirectBoot/**'
+      - '.github/workflows/Build_DirectBoot.yml'
   workflow_dispatch:
 
 concurrency:
@@ -32,13 +32,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build BiometricAuthentication
+    name: Build DirectBoot
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     defaults:
       run:
-        working-directory: BiometricAuthentication
+        working-directory: DirectBoot
 
     steps:
     - uses: actions/checkout@v4
