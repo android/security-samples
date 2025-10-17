@@ -13,30 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-buildscript {
-  ext {
-    app_compat_version = '1.1.0'
-    kotlin_version = '1.3.50'
-  }
 
-  repositories {
-    google()
-    mavenCentral()
-  }
+package com.androiddeveloperverification.onboarding
 
-  dependencies {
-    classpath 'com.android.tools.build:gradle:4.2.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-  }
-}
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.MaterialTheme
+import com.androiddeveloperverification.onboarding.ui.screens.GreetingScreen
 
-allprojects {
-  repositories {
-    google()
-    mavenCentral()
-  }
-}
-
-task clean(type: Delete) {
-  delete rootProject.buildDir
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            MaterialTheme {
+                GreetingScreen()
+            }
+        }
+    }
 }

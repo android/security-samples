@@ -1,6 +1,10 @@
-
 Android DirectBoot Sample
 ===================================
+
+> **Warning**
+> This sample has been deprecated and is no longer being maintained.
+> 
+> To find other samples that may be of interest, see [https://developer.android.com/samples](https://developer.android.com/samples).
 
 Sample demonstrating how to store data in a device protected storage which
 is always available while the device is booted both before and after any
