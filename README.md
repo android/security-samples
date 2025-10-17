@@ -1,7 +1,7 @@
 Android Security Samples Repository
 ===================================
 
-## [Android Developer Verification Onboarding](https://github.com/android/security-samples/tree/master/AndroidDeveloperVerificationOnboarding)
+## [Android Developer Verification Onboarding](https://github.com/android/security-samples/tree/main/AndroidDeveloperVerificationOnboarding)
 
 This project shows you exactly which file to create (adi-registration.properties) and provides the necessary folder structure to guide you. Use this template to check your placement of the file and ensure the correct insertion of your unique developer 'snippet' for successful verification.
 
