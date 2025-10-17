@@ -24,6 +24,8 @@ on:
     paths:
       - 'AndroidDeveloperVerificationOnboarding/**'
       - '.github/workflows/Build_AndroidDeveloperVerificationOnboarding.yml'
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
 concurrency:
