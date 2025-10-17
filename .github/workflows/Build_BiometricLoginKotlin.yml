@@ -24,6 +24,8 @@ on:
     paths:
       - 'BiometricLoginKotlin/**'
       - '.github/workflows/Build_BiometricLoginKotlin.yml'
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
 concurrency:
