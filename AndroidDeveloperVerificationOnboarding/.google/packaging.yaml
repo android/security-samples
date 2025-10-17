@@ -1,4 +1,4 @@
-# Copyright 2019 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,15 +22,7 @@ technologies: [Android]
 categories:   [Security]
 languages:    [Kotlin]
 solutions:    [Mobile]
-github:       android/security
-level:        INTERMEDIATE
-icon:         screenshots/big-icon.png
+github:       android/security-samples
+level:        BEGINNER
 apiRefs:
-    - android:android.hardware.fingerprint.FingerprintManager
-    - android:android.hardware.fingerprint.FingerprintManager.AuthenticationCallback
-    - android:android.hardware.fingerprint.FingerprintManager.CryptoObject
-    - android:android.security.KeyGenParameterSpec
-    - android:java.security.KeyStore
-    - android:javax.crypto.Cipher
-    - android:javax.crypto.KeyGenerator
 license: apache2
