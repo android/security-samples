@@ -24,6 +24,8 @@ on:
     paths:
       - 'BiometricAuthentication/**'
       - '.github/workflows/Build_BiometricAuthentication.yml'
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
 concurrency:

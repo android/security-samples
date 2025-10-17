@@ -24,6 +24,8 @@ on:
     paths:
       - 'DirectBoot/**'
       - '.github/workflows/Build_DirectBoot.yml'
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
 concurrency:
