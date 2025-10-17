@@ -16,14 +16,8 @@ name: Build BiometricAuthentication
 on:
   push:
     branches: [ '*' ]
-    paths:
-      - 'BiometricAuthentication/**'
-      - '.github/workflows/Build_BiometricAuthentication.yml'
   pull_request:
     branches: [ '*' ]
-    paths:
-      - 'BiometricAuthentication/**'
-      - '.github/workflows/Build_BiometricAuthentication.yml'
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
@@ -33,8 +27,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sample: ${{ steps.filter.outputs.sample }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            sample:
+              - 'BiometricAuthentication/**'
+              - '.github/workflows/Build_BiometricAuthentication.yml'
+
   build:
     name: Build BiometricAuthentication
+    needs: changes
+    if: ${{ needs.changes.outputs.sample == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

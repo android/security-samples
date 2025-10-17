@@ -16,14 +16,8 @@ name: Build DirectBoot
 on:
   push:
     branches: [ '*' ]
-    paths:
-      - 'DirectBoot/**'
-      - '.github/workflows/Build_DirectBoot.yml'
   pull_request:
     branches: [ '*' ]
-    paths:
-      - 'DirectBoot/**'
-      - '.github/workflows/Build_DirectBoot.yml'
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
@@ -33,8 +27,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sample: ${{ steps.filter.outputs.sample }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            sample:
+              - 'DirectBoot/**'
+              - '.github/workflows/Build_DirectBoot.yml'
+
   build:
     name: Build DirectBoot
+    needs: changes
+    if: ${{ needs.changes.outputs.sample == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
