@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-buildscript {
-  ext {
-    app_compat_version = '1.1.0'
-    kotlin_version = '1.3.50'
-  }
 
-  repositories {
-    google()
-    mavenCentral()
-  }
+package com.androiddeveloperverification.onboarding.ui.components
 
-  dependencies {
-    classpath 'com.android.tools.build:gradle:4.2.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-  }
-}
+import androidx.annotation.StringRes
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 
-allprojects {
-  repositories {
-    google()
-    mavenCentral()
-  }
-}
-
-task clean(type: Delete) {
-  delete rootProject.buildDir
+@Composable
+fun Greeting(
+    @StringRes message: Int,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = stringResource(message),
+        modifier = modifier
+    )
 }

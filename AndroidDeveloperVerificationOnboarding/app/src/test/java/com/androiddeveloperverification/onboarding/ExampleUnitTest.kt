@@ -13,30 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-buildscript {
-  ext {
-    app_compat_version = '1.1.0'
-    kotlin_version = '1.3.50'
-  }
 
-  repositories {
-    google()
-    mavenCentral()
-  }
+package com.androiddeveloperverification.onboarding
 
-  dependencies {
-    classpath 'com.android.tools.build:gradle:4.2.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-  }
-}
+import org.junit.Test
 
-allprojects {
-  repositories {
-    google()
-    mavenCentral()
-  }
-}
+import org.junit.Assert.*
 
-task clean(type: Delete) {
-  delete rootProject.buildDir
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * See [testing documentation](http://d.android.com/tools/testing).
+ */
+class ExampleUnitTest {
+    @Test
+    fun addition_isCorrect() {
+        assertEquals(4, 2 + 2)
+    }
 }
