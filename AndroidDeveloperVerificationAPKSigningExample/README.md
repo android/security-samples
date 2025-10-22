@@ -1,4 +1,4 @@
-# Android Developer Verification Onboarding Sample
+# Android Developer Verification APK Signing Example
 
 Are you preparing to sign an APK for the Android developer verification proof of ownership process?
 
