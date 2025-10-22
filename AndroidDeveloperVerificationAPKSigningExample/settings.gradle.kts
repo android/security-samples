@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AndroidDeveloperVerificationOnboarding"
+rootProject.name = "AndroidDeveloperVerificationAPKSigningExample"
 include(":app")

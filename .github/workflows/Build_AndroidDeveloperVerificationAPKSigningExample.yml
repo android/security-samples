@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: Build AndroidDeveloperVerificationOnboarding
+name: Build AndroidDeveloperVerificationAPKSigningExample
 
 on:
   push:
@@ -38,11 +38,11 @@ jobs:
         with:
           filters: |
             sample:
-              - 'AndroidDeveloperVerificationOnboarding/**'
-              - '.github/workflows/Build_AndroidDeveloperVerificationOnboarding.yml'
+              - 'AndroidDeveloperVerificationAPKSigningExample/**'
+              - '.github/workflows/Build_AndroidDeveloperVerificationAPKSigningExample.yml'
 
   build:
-    name: Build AndroidDeveloperVerificationOnboarding
+    name: Build AndroidDeveloperVerificationAPKSigningExample
     needs: changes
     if: ${{ needs.changes.outputs.sample == 'true' }}
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: AndroidDeveloperVerificationOnboarding
+        working-directory: AndroidDeveloperVerificationAPKSigningExample
 
     steps:
     - uses: actions/checkout@v4
