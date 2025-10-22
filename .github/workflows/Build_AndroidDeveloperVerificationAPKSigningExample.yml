@@ -39,7 +39,7 @@ jobs:
           filters: |
             sample:
               - 'AndroidDeveloperVerificationAPKSigningExample/**'
-              - '.github/workflows/Build_AndroidDeveloperVerificationOnboarding.yml'
+              - '.github/workflows/Build_AndroidDeveloperVerificationAPKSigningExample.yml'
 
   build:
     name: Build AndroidDeveloperVerificationAPKSigningExample
