@@ -38,11 +38,11 @@ jobs:
         with:
           filters: |
             sample:
-              - 'AndroidDeveloperVerificationOnboarding/**'
+              - 'AndroidDeveloperVerificationAPKSigningExample/**'
               - '.github/workflows/Build_AndroidDeveloperVerificationOnboarding.yml'
 
   build:
-    name: Build AndroidDeveloperVerificationOnboarding
+    name: Build AndroidDeveloperVerificationAPKSigningExample
     needs: changes
     if: ${{ needs.changes.outputs.sample == 'true' }}
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: AndroidDeveloperVerificationOnboarding
+        working-directory: AndroidDeveloperVerificationAPKSigningExample
 
     steps:
     - uses: actions/checkout@v4
