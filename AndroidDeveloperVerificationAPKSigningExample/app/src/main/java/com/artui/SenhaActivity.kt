@@ -7,6 +7,15 @@ class SenhaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_senha)
+
+        // bloqueia a tela até autenticar
+        BiometricAuth.authenticate(this,
+            onSuccess = {
+                setContentView(R.layout.activity_senha)
+            },
+            onFail = {
+                finish()
+            }
+        )
     }
 }
