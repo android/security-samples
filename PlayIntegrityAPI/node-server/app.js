@@ -1,0 +1,38 @@
+const express = require('express');
+const bankController = require('./src/features/bank/bank.controller');
+const streamingController = require('./src/features/streaming/streaming.controller');
+const gameController = require('./src/features/game/game.controller');
+const extractIntegrityToken = require('./src/middleware/integrity.middleware');
+const app = express();
+
+app.use(express.json());
+
+// Bank Micro-app Routes
+app.post('/api/v1/bank/transfer', extractIntegrityToken, bankController.handleTransfer);
+
+// Streaming Micro-app Routes
+app.get('/api/v1/streaming/:contentId/manifest.mpd', extractIntegrityToken, streamingController.getManifest);
+
+// Game Micro-app Routes
+app.post('/api/v1/game/initiate', extractIntegrityToken, gameController.initiate);
+app.post('/api/v1/game/status', extractIntegrityToken, gameController.getStatus);
+app.post('/api/v1/game/stop', extractIntegrityToken, gameController.stop);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error("Internal Server Error:", err.message);
+    res.status(500).json({
+        status: "ERROR",
+        message: "An internal server error occurred while processing your request."
+    });
+});
+
+// Only start the server if this file is run directly (e.g., node app.js)
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`PlayIntegrityAPI Canonical Sample Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bank Screen -->
+    <string name="bank_top_bar_title">BANK</string>
+    <string name="bank_header_subtitle">Transaction portal</string>
+
+    <!-- Bank Form -->
+    <string name="bank_label_account_number">Account number (fake)</string>
+    <string name="bank_placeholder_account_number">0000000000</string>
+    <string name="bank_label_amount">Amount (fake)</string>
+    <string name="bank_placeholder_amount">0.00</string>
+    <string name="bank_btn_transfer">Transfer</string>
+
+    <!-- Bank Status Messages -->
+    <string name="bank_status_error_service_unavailable">Service Unavailable. Try again later.</string>
+    <string name="bank_status_success_transfer">Transfer initiated successfully.\nReference: #TRX-9921</string>
+
+    <!-- Bank Security Dialog -->
+    <string name="bank_dialog_security_failed_title">Security Check Failed</string>
+    <string name="bank_dialog_security_failed_text">We couldn\'t verify your device\'s security. To protect your account, this transfer was blocked.\n\nTap \'Fix\' to resolve this issue in the Google Play Store.</string>
+    <string name="bank_dialog_btn_fix">Fix</string>
+    <string name="bank_dialog_btn_cancel">Cancel</string>
+</resources>

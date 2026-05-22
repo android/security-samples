@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">PlayIntegrityAPI</string>
+    <!-- Home Screen -->
+    <string name="home_top_bar_title">PLAY INTEGRITY API SAMPLE</string>
+    <string name="home_header_select_use_case">Select a Play Integrity API use case</string>
+    <string name="home_status_integrity_secure">SYSTEM INTEGRITY STATUS: SECURE</string>
+
+    <!-- Use Case Cards -->
+    <string name="use_case_bank_title">Protect a high value action</string>
+    <string name="use_case_bank_desc">Bank transfer example demonstrating secure data transmission, content binding and user remediation</string>
+
+    <string name="use_case_streaming_title">Protect a server-side resource</string>
+    <string name="use_case_streaming_desc">Media stream example demonstrating tiered server responses based on trust levels</string>
+
+    <string name="use_case_game_title">Protect a session environment</string>
+    <string name="use_case_game_desc">Gaming example demonstrating checking for threats like screen capturing, a11y misuse, and known malware</string>
+
+    <!-- Content Descriptions -->
+    <string name="use_case_navigate_content_desc">Navigate</string>
+</resources>
