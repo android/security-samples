@@ -1,5 +1,6 @@
 package com.android.security.samples.playintegrityapi.feature.game.ui
 
+import android.os.SystemClock
 import com.android.security.samples.playintegrityapi.core.integrity.IntegrityRepository
 import com.android.security.samples.playintegrityapi.feature.game.data.remote.GameInitiateResponse
 import com.android.security.samples.playintegrityapi.feature.game.data.remote.GameStatusResponse
@@ -23,6 +24,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.MockedStatic
+import org.mockito.Mockito.mockStatic
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -37,6 +40,8 @@ class GameViewModelTest {
     private lateinit var submitGameScoreUseCase: SubmitGameScoreUseCase
     private lateinit var integrityRepository: IntegrityRepository
     private lateinit var viewModel: GameViewModel
+
+    private lateinit var systemClockMock: MockedStatic<SystemClock>
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -57,11 +62,17 @@ class GameViewModelTest {
             submitGameScoreUseCase,
             integrityRepository
         )
+
+        // Mock SystemClock to return a constant 1000L milliseconds
+        systemClockMock = mockStatic(SystemClock::class.java)
+        systemClockMock.`when`<Long> { SystemClock.elapsedRealtime() }.thenReturn(1000L)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        // Ensure the static mock is closed to prevent leaking into other test classes
+        systemClockMock.close()
     }
 
     @Test
