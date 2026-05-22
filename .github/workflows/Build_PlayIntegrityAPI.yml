@@ -1,0 +1,105 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+name: Build PlayIntegrityAPI
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sample: ${{ steps.filter.outputs.sample }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            sample:
+              - 'PlayIntegrityAPI/**'
+              - '.github/workflows/Build_PlayIntegrityAPI.yml'
+
+  build-android:
+    name: Build PlayIntegrityAPI (Android Client)
+    needs: changes
+    if: ${{ needs.changes.outputs.sample == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: PlayIntegrityAPI/android-client
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT || github.token }}
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Build App, Unit Tests, and Lint
+      run: ./gradlew assembleEmulatorDebug assembleEmulatorDebugAndroidTest testEmulatorDebugUnitTest --stacktrace
+
+    - name: Verify UI Screenshots
+      run: ./gradlew validateEmulatorDebugScreenshotTest --stacktrace
+
+  build-node:
+    name: Build PlayIntegrityAPI (Node.js Server)
+    needs: changes
+    if: ${{ needs.changes.outputs.sample == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: PlayIntegrityAPI/node-server
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT || github.token }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: PlayIntegrityAPI/node-server/package-lock.json
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Tests
+      run: npm test

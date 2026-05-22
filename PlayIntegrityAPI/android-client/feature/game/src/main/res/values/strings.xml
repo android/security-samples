@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Game Screen Header -->
+    <string name="game_top_bar_title">Game</string>
+    <string name="game_header_title">RHYTHM PULSE</string>
+    <string name="game_header_subtitle">Secure gameplay session</string>
+
+    <!-- Game Arena States -->
+    <string name="game_arena_target_label">TARGET</string>
+    <string name="game_arena_verifying">VERIFYING…</string>
+    <string name="game_arena_target_value">Target: %1$.2fs</string>
+    <string name="game_arena_stopped_at">Stopped at: %1$.2fs</string>
+    <string name="game_arena_actual_value">Actual: %1$.2fs</string>
+    <string name="game_arena_diff_value">Diff: %1$.2fs</string>
+
+    <!-- Game Arena Results -->
+    <string name="game_arena_result_perfect">PERFECT!</string>
+    <string name="game_arena_result_near_perfect">NEAR HIT!</string>
+    <string name="game_arena_result_near_miss">ALMOST THERE</string>
+    <string name="game_arena_result_missed">MISSED</string>
+
+    <!-- Game Controls -->
+    <string name="game_btn_start_secure_session">START SECURE SESSION</string>
+    <string name="game_btn_start">START</string>
+    <string name="game_btn_stop">STOP</string>
+    <string name="game_btn_play_again">PLAY AGAIN</string>
+
+    <!-- Game Security Checklist -->
+    <string name="game_checklist_screen_capture">No risky apps with screen capture detected</string>
+    <string name="game_checklist_accessibility">No risky apps with accessibility permissions detected</string>
+    <string name="game_checklist_play_protect">No security issues found by Play Protect</string>
+    <string name="game_checklist_screen_capture_fail">Risky apps with screen capture detected</string>
+    <string name="game_checklist_accessibility_fail">Risky apps with accessibility permissions detected</string>
+    <string name="game_checklist_play_protect_fail">Security issues found by Play Protect</string>
+
+    <!-- Leaderboard Status -->
+    <string name="game_leaderboard_accepted_title">Score Verified</string>
+    <string name="game_leaderboard_accepted_desc">Your score was verified by Play Integrity and posted to the leaderboard.</string>
+    <string name="game_leaderboard_rejected_title">Score Rejected</string>
+    <string name="game_leaderboard_rejected_desc">Your environment failed Play security checks.</string>
+    <string name="game_btn_remediate">Fix environment and retry</string>
+    <string name="game_btn_try_again">TRY AGAIN</string>
+
+</resources>

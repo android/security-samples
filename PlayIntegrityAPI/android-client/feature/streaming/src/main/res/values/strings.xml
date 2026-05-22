@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Streaming Screen -->
+    <string name="streaming_top_bar_title">MEDIA PLAYER</string>
+
+    <!-- Streaming Tiers -->
+    <string name="streaming_tier_premium_title">Premium tier (1080p)</string>
+    <string name="streaming_tier_premium_desc">This device meets strong integrity (Android 13+)</string>
+
+    <string name="streaming_tier_high_title">High quality tier (720p)</string>
+    <string name="streaming_tier_high_desc">This device meets device integrity (Android 13+) or strong integrity (before Android 13)</string>
+
+    <string name="streaming_tier_standard_title">Standard tier (480p)</string>
+    <string name="streaming_tier_standard_desc">This device meets device integrity (before Android 13)</string>
+
+    <string name="streaming_tier_basic_title">Basic tier (240p)</string>
+    <string name="streaming_tier_basic_desc">This device meets basic integrity and passes system checks. However, this device may be acting as a proxy.</string>
+
+    <string name="streaming_tier_restricted_title">Restricted tier (144p)</string>
+    <string name="streaming_tier_restricted_desc">This device fails all integrity checks. There\'s a higher risk of tampering and abuse.</string>
+
+    <!-- Streaming Buttons & Content Descriptions -->
+    <string name="streaming_btn_fetch_manifest">Refresh Integrity Check</string>
+    <string name="streaming_video_pause_content_desc">Pause</string>
+    <string name="streaming_video_play_content_desc">Play</string>
+
+    <string name="streaming_playback_failed">Playback failed</string>
+    <string name="streaming_server_response">SERVER RESPONSE</string>
+</resources>
