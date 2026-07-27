@@ -31,6 +31,17 @@ data class SecurityChecklistDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class GameChallengeResponse(
+    val status: String,
+    val challenge: String
+)
+
+@JsonClass(generateAdapter = true)
+data class GameInitiateRequest(
+    val challenge: String
+)
+
+@JsonClass(generateAdapter = true)
 data class GameInitiateResponse(
     val status: String,
     val sessionId: String,
@@ -53,10 +64,10 @@ data class IntervalTokenDto(
 
 @JsonClass(generateAdapter = true)
 data class GameStopRequest(
-    val sessionId: String,
-    val clientStartTime: Long,
     val actualTime: Double,
-    val intervalTokens: List<IntervalTokenDto>
+    val clientStartTime: Long,
+    val intervalTokens: List<IntervalTokenDto>,
+    val sessionId: String
 )
 
 @JsonClass(generateAdapter = true)
@@ -68,9 +79,13 @@ data class GameStopResponse(
 )
 
 interface GameApiService {
+    @POST("/api/v1/game/challenge")
+    suspend fun getChallenge(): Response<GameChallengeResponse>
+
     @POST("/api/v1/game/initiate")
     suspend fun initiateSession(
-        @Header(NetworkConstants.Header.PLAY_INTEGRITY_TOKEN) integrityToken: String
+        @Header(NetworkConstants.Header.PLAY_INTEGRITY_TOKEN) integrityToken: String,
+        @Body request: GameInitiateRequest
     ): Response<GameInitiateResponse>
 
     @POST("/api/v1/game/status")

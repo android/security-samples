@@ -26,6 +26,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -84,12 +85,21 @@ class SubmitSecureTransferUseCase @Inject constructor(
     }
 
     private fun createTransferRequest(accountNumber: String, amount: BigDecimal): TransferRequest {
+        // NOTE: While Play Integrity API Standard Mode offers automatic replay protection,
+        // it only prevents a single token from being verified excessively. See https://developer.android.com/google/play/integrity/standard#replay-protection
+        // To strictly prevent duplicate requests (exactly-once execution), an app must implement
+        // its own idempotency mechanism using a unique key.
         return TransferRequest(
             amount = amount.setScale(2, RoundingMode.HALF_UP).toPlainString(),
-            accountNumber = accountNumber
+            accountNumber = accountNumber,
+            idempotencyKey = UUID.randomUUID().toString()
         )
     }
 
+    // Request hash generation:
+    // When the user initiates the transfer, the client serializes the transaction
+    // details into a JSON string and computes its SHA-256 hash. The resulting
+    // Base64-encoded string is passed as the requestHash parameter into the token provider.
     private fun generateContentBindingHash(request: TransferRequest): String? {
         return try {
             val rawJson = requestAdapter.toJson(request)
@@ -125,6 +135,10 @@ class SubmitSecureTransferUseCase @Inject constructor(
         )
     }
 
+    // Network execution:
+    // Once the Play Integrity token is generated, this method invokes the BankRepository,
+    // placing the raw JSON transaction in the HTTP body and injecting the token
+    // into the HTTP header for submission to the server.
     private suspend fun executeAndProcessTransfer(
         request: TransferRequest,
         integrityToken: StandardIntegrityToken
@@ -157,6 +171,10 @@ class SubmitSecureTransferUseCase @Inject constructor(
         )
     }
 
+    // Handling remediation (Step 1: Parsing):
+    // If the backend decides the device or app does not meet the required security
+    // policy, it returns a 403 Forbidden with a structured JSON payload.
+    // This method parses that 403 error and extracts the remediationCode.
     private fun handleServerFailure(
         responseCode: Int,
         errorJson: String?,

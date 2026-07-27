@@ -12,19 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const { StatusCodes } = require('http-status-codes');
 const crypto = require('crypto');
 const gamePolicy = require('./game.policy');
 const cryptoService = require('../../services/crypto.service');
 
 // In-memory store for active sessions
 const activeSessions = new Map();
+// In-memory store for active challenges (challenge -> expiryTimestamp)
+const activeChallenges = new Map();
 
 class GameController {
 
     constructor() {
+        this.getChallenge = this.getChallenge.bind(this);
         this.initiate = this.initiate.bind(this);
         this.getStatus = this.getStatus.bind(this);
         this.stop = this.stop.bind(this);
+    }
+
+    /**
+     * POST /api/v1/game/challenge
+     */
+    async getChallenge(req, res, next) {
+        try {
+            const challenge = crypto.randomUUID();
+            // Store challenge with 5 minute expiration
+            activeChallenges.set(challenge, Date.now() + 5 * 60 * 1000);
+            return res.status(200).json({
+                status: "SUCCESS",
+                challenge
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
     /**
@@ -32,7 +53,29 @@ class GameController {
      */
     async initiate(req, res, next) {
         try {
+            const { challenge } = req.body;
+            if (!challenge) {
+                return res.status(400).json({ status: "ERROR", message: "Missing challenge." });
+            }
+
+            const expiry = activeChallenges.get(challenge);
+            if (!expiry || Date.now() > expiry) {
+                if (expiry) activeChallenges.delete(challenge);
+                return res.status(403).json({ status: "ERROR", message: "Invalid or expired challenge." });
+            }
+            activeChallenges.delete(challenge);
+
             const tokenPayload = res.locals.integrityPayload || null;
+            if (!tokenPayload) {
+                return res.status(403).json({ status: "ERROR", message: "Missing integrity token payload." });
+            }
+
+            // Verify content binding
+            const serverRequestHash = cryptoService.computePayloadHash(req.body);
+            if (serverRequestHash !== tokenPayload.requestDetails?.requestHash) {
+                return res.status(403).json({ status: "ERROR", message: "Payload signature validation failed." });
+            }
+
             const verdicts = gamePolicy.evaluateEnvironment(tokenPayload);
             const sessionId = crypto.randomUUID();
 
@@ -73,7 +116,7 @@ class GameController {
                 hasInitSecurityViolation: !verdicts.isSecure
             });
 
-            return res.status(200).json({
+            return res.status(StatusCodes.OK).json({
                 status: "SUCCESS",
                 sessionId,
                 targetTime,
@@ -91,11 +134,13 @@ class GameController {
      */
     async getStatus(req, res, next) {
         try {
-            // Same as initiate: allow status checks even if the token failed locally
+            // Same as initiate: allow status checks even if the token failed locally.
+            // DEVELOPER NOTE: The request hash is not verified here because the status check is 
+            // read-only and non-sensitive. Do not use unverified nonces on critical transaction endpoints.
             const tokenPayload = res.locals.integrityPayload || null;
             const verdicts = gamePolicy.evaluateEnvironment(tokenPayload);
 
-            return res.status(200).json({
+            return res.status(StatusCodes.OK).json({
                 status: "SUCCESS",
                 checklist: verdicts
             });
@@ -114,18 +159,18 @@ class GameController {
             const finalTokenPayload = res.locals.integrityPayload || null;
 
             const session = activeSessions.get(sessionId);
-            if (!session) return res.status(404).json({ status: "ERROR", message: "Session expired." });
+            if (!session) return res.status(StatusCodes.NOT_FOUND).json({ status: "ERROR", message: "Session expired." });
 
             activeSessions.delete(sessionId);
 
             // Reject the score if they reached the end without a valid final token
             if (!finalTokenPayload) {
-                return res.status(403).json({ status: "ERROR", message: "Environment compromised: Invalid final attestation." });
+                return res.status(StatusCodes.FORBIDDEN).json({ status: "ERROR", message: "Environment compromised: Invalid final attestation." });
             }
 
             // 1. Verify standard payload integrity (Content Binding)
             if (!this.#verifyFinalPayloadHash(req.body, finalTokenPayload)) {
-                return res.status(403).json({ status: "ERROR", message: "Payload signature validation failed." });
+                return res.status(StatusCodes.FORBIDDEN).json({ status: "ERROR", message: "Payload signature validation failed." });
             }
 
             // 2. Verify all background interval tokens
@@ -138,15 +183,15 @@ class GameController {
             );
 
             if (intervalError) {
-                return res.status(403).json(intervalError);
+                return res.status(StatusCodes.FORBIDDEN).json(intervalError);
             }
 
             // 3. Final environmental check
             if (session.hasInitSecurityViolation || !this.#verifyFinalEnvironment(finalTokenPayload)) {
-                return res.status(403).json({ status: "ERROR", message: "Environment compromised." });
+                return res.status(StatusCodes.FORBIDDEN).json({ status: "ERROR", message: "Environment compromised." });
             }
 
-            return res.status(200).json({ status: "SUCCESS", message: "Score verified." });
+            return res.status(StatusCodes.OK).json({ status: "SUCCESS", message: "Score verified." });
 
         } catch (error) {
             next(error);

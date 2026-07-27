@@ -23,19 +23,35 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 
+import com.android.security.samples.playintegrityapi.feature.game.data.remote.GameInitiateRequest
+
 class InitiateGameUseCase @Inject constructor(
     private val gameRepository: GameRepository,
     private val integrityRepository: IntegrityRepository
 ) {
+    // Token preparation and session initialisation:
+    // When the user taps Start Secure Session, the client fetches a server-generated challenge,
+    // hashes it, and requests a Play Integrity token bound to this challenge.
+    // It then calls POST /api/v1/game/initiate with the token.
+    // The server returns a unique sessionId, the game's targetTime, and an array of
+    // randomised check-in intervals (e.g. [2.5, 5.12, 8.3]).
     suspend operator fun invoke(): GameResult<GameInitiateResponse> {
-        val requestHash = generateSha256Hash(UUID.randomUUID().toString())
+        val challengeResponse = gameRepository.getChallenge()
+        if (!challengeResponse.isSuccessful || challengeResponse.body() == null) {
+            return GameResult.Failure.NetworkError("Failed to fetch server challenge")
+        }
+        val challenge = challengeResponse.body()!!.challenge
+        val jsonPayload = """{"challenge":"$challenge"}"""
+        val requestHash = generateSha256Hash(jsonPayload)
+        
         integrityRepository.warmUp()
         val tokenResult = integrityRepository.requestIntegrityToken(requestHash)
 
         if (tokenResult.isFailure) return GameResult.Failure.IntegrityError("Failed to generate local token")
 
         return try {
-            val response = gameRepository.initiateSession(tokenResult.getOrThrow().token())
+            val request = GameInitiateRequest(challenge)
+            val response = gameRepository.initiateSession(tokenResult.getOrThrow().token(), request)
             if (response.isSuccessful && response.body() != null) {
                 GameResult.Success(response.body()!!)
             } else {

@@ -25,7 +25,8 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class TransferRequest(
     val amount: String,
-    val accountNumber: String
+    val accountNumber: String,
+    val idempotencyKey: String
 )
 
 @JsonClass(generateAdapter = true)

@@ -14,6 +14,7 @@
 
 const request = require('supertest');
 const app = require('../../../app');
+const { StatusCodes } = require('http-status-codes');
 
 const cryptoService = require('../../services/crypto.service');
 const integrityService = require('../../services/integrity.service');
@@ -51,7 +52,7 @@ describe('Streaming Feature Integration Tests (GET /api/v1/streaming/:contentId/
         const response = await request(app)
             .get(ENDPOINT);
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(StatusCodes.OK);
         expect(response.headers['content-type']).toContain('application/dash+xml');
         expect(integrityService.decodeToken).not.toHaveBeenCalled();
         expect(manifestService.getFilteredManifest).toHaveBeenCalledWith(STREAM_QUALITIES.RESTRICTED);
@@ -82,7 +83,7 @@ describe('Streaming Feature Integration Tests (GET /api/v1/streaming/:contentId/
             .get(ENDPOINT)
             .set(HEADERS.PLAY_INTEGRITY_TOKEN, 'valid_mock_token');
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(StatusCodes.OK);
         expect(manifestService.getFilteredManifest).toHaveBeenCalledWith(STREAM_QUALITIES.PREMIUM);
         expect(response.text).toBe(`<MPD>Tier:${STREAM_QUALITIES.PREMIUM}</MPD>`);
     });
@@ -109,7 +110,7 @@ describe('Streaming Feature Integration Tests (GET /api/v1/streaming/:contentId/
             .get(ENDPOINT)
             .set(HEADERS.PLAY_INTEGRITY_TOKEN, 'valid_mock_token');
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(StatusCodes.OK);
         expect(manifestService.getFilteredManifest).toHaveBeenCalledWith(STREAM_QUALITIES.RESTRICTED);
         expect(response.text).toBe(`<MPD>Tier:${STREAM_QUALITIES.RESTRICTED}</MPD>`);
     });
@@ -137,7 +138,7 @@ describe('Streaming Feature Integration Tests (GET /api/v1/streaming/:contentId/
             .get(ENDPOINT)
             .set(HEADERS.PLAY_INTEGRITY_TOKEN, 'valid_mock_token');
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(StatusCodes.OK);
         expect(manifestService.getFilteredManifest).toHaveBeenCalledWith(STREAM_QUALITIES.BASIC);
         expect(response.text).toBe(`<MPD>Tier:${STREAM_QUALITIES.BASIC}</MPD>`);
     });

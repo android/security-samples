@@ -13,6 +13,20 @@
 > broader, multi-layered anti-abuse strategy tailored to their specific business
 > risks.
 
+> [!WARNING]
+> Security Notice: Cleartext HTTP in Development
+>
+> Across the Android client, interactions rely on a dynamically configured base URL
+> (`BuildConfig.BASE_URL`) that points to a local Node.js server using unencrypted HTTP
+> (e.g., `http://localhost:3000` or `http://10.0.2.2:3000`). This is an intentional design choice
+> for this sample to minimize setup complexity and ensure frictionless onboarding, avoiding the
+> need to generate and configure self-signed SSL/TLS certificates locally.
+>
+> **This configuration is strictly for local deployment.** When integrating these
+> concepts into your own production app, you **should** secure your network layer by using
+> secure HTTPS (`https://`) and avoid having cleartext permissions in your
+> `network_security_config.xml`.
+
 # Setup
 
 To run the Play Integrity API Canonical Sample end-to-end, you need to configure
@@ -125,496 +139,80 @@ specific Google Cloud project.
     *   Note: once the device is disconnected, you will need to run this command
         again the next time you need to test this flow
 
-# Banking Micro App: Client
+# Banking Micro App
 
-[This directory](android-client/feature/bank) contains the Android client
-implementation for the Bank micro-app. It focuses on the practical mechanics of
-integrating the Play Integrity API Standard Request flow, including token
-preparation, payload hashing, and UI-level error handling (Remediation Dialogs).
+The Banking micro-app demonstrates how to securely parse HTTP requests,
+cryptographically validate Play Integrity tokens, and enforce business rules.
 
-### 1\. Token preparation (warm-up)
+<div align="center">
+  <img src="media/bank_app_remediation.gif" height="400" alt="Banking App Flow">
+</div>
 
-To ensure the high-value action (tapping "Transfer") executes with minimal
-latency, the client asynchronously calls
-`StandardIntegrityManager.prepareIntegrityToken()` method to pre-warm the token
-provider when the user navigates to the Transaction portal.
+### User Journey Overview
+When a user attempts to submit a secure transfer, the app requests an integrity token. If the device fails the integrity checks (e.g., a compromised device or unlicensed app), a remediation dialog prompts the user to resolve the issue (such as installing from Google Play). Upon successful remediation, the app retries the transaction securely.
 
-*   Implementation: This logic is managed within the
-    [BankViewModel.kt](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt)
-    `init` block, which delegates to the
-    [IntegrityRepositoryImpl.kt](android-client/core/integrity/src/main/java/com/android/security/samples/playintegrityapi/core/integrity/IntegrityRepository.kt)'s
-    `warmUp()` method.
+## Client-Side Implementation
+See the following files in `android-client/feature/bank`:
+*   **Token preparation (warm-up) & Handling remediation:** [BankViewModel.kt](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt)
+*   **Request hash generation & Network execution:** [SubmitSecureTransferUseCase.kt](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/domain/SubmitSecureTransferUseCase.kt)
 
-### 2\. Request hash generation
-
-When the user initiates the transfer, the client serializes the transaction
-details into a JSON string and computes its SHA-256 hash using utilities in the
-`:core:common` module.
-
-*   Implementation: See the
-    [SubmitSecureTransferUseCase.kt](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/domain/SubmitSecureTransferUseCase.kt).
-    The resulting Base64-encoded SHA-256 string is passed directly as the
-    `requestHash` parameter into
-    `StandardIntegrityTokenProvider.requestIntegrityToken()`.
-
-### 3\. Network execution
-
-Once the Play Integrity token is generated, it is passed down to the
-`:core:network` layer.
-
-*   **Implementation:** The
-    [SubmitSecureTransferUseCase](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/domain/SubmitSecureTransferUseCase.kt)
-    invokes the
-    [BankRepository](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/data/repository/BankRepository.kt),
-    placing the raw JSON transaction in the HTTP body and injecting the token
-    into the `x-play-integrity-token` HTTP header for submission to the server.
-
-### 4\. Handling remediation
-
-A core feature of this client implementation is gracefully handling server-side
-integrity rejections.
-
-![Triggering the GET\_INTEGRITY Remediation Dialog](media/bank_app_remediation.gif)
-
-***Figure 1\.** Triggering the GET\_INTEGRITY Remediation Dialog*
-
-If the backend decides the device or app does not meet the required security
-policy, it returns a 403 Forbidden with a structured JSON payload.
-
-**Example Server Response:**
-
-```json
-{
-  "status": "ERROR",
-  "error_code": "INTEGRITY_REJECTED",
-  "message": "Device does not meet the required security standards.",
-  "remediation_code": 4
-}
-```
-
-**Client response flow:**
-
-1.  **Parsing:**
-    [SubmitSecureTransferUseCase](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/domain/SubmitSecureTransferUseCase.kt)
-    parses the 403 error and extracts the
-    [remediationCode](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/domain/SubmitSecureTransferUseCase.kt).
-2.  **UI State Update:** The
-    [BankViewModel](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt)
-    updates the
-    [TransferUiState](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt)
-    to
-    [TransferUiState.Error.Integrity.Server](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt),
-    making the remediation type code available to the UI.
-3.  **UI Prompt:**
-    [BankRoute](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankScreen.kt)
-    composable observes this state and presents an
-    [AlertDialog](https://developer.android.com/develop/ui/compose/components/dialog)
-    to the user.
-4.  **Triggering the Dialog:** If the user chooses to resolve it,
-    [BankViewModel.triggerRemediationDialog()](android-client/feature/bank/src/main/java/com/android/security/samples/playintegrityapi/feature/bank/ui/BankViewModel.kt)
-    invokes the `standardIntegrityManager.showDialog()` via the
-    [IntegrityRepository](android-client/core/integrity/src/main/java/com/android/security/samples/playintegrityapi/core/integrity/IntegrityRepository.kt)
-    to display the
-    [GET\_INTEGRITY](https://developer.android.com/google/play/integrity/remediation#get-integrity-dialog)
-    dialog.
-5.  **Resolution:** The client handles the result. If successful, the user can
-    re-attempt the transfer.
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-# Banking Micro App: Server
-
-[This directory](node-server/src/features/bank) contains the backend logic for
-the Bank micro-app. It demonstrates how to securely parse HTTP requests,
-cryptographically validate Play Integrity tokens, and enforce business rules
-using a dedicated Policy file.
-
-## Architecture Overview
-
-The feature is split into two layers to maintain clean architecture: the
-Controller
-([bank.controller.js](node-server/src/features/bank/bank.controller.js)) and the
-Policy ([bank.policy.js](node-server/src/features/bank/bank.policy.js)).
-
-### 1\. The Controller (bank.controller.js)
-
-The Controller handles the cryptographic validation phase of the request. The
-token decoding is modularized into middleware. Its execution flow is as follows:
-
-1.  **Extract & Decode Middleware:** The
-    [extractIntegrityToken](node-server/src/middleware/integrity.middleware.js)
-    middleware retrieves the `x-play-integrity-token` from the HTTP headers and
-    delegates decoding to the global
-    [integrity.service.js](node-server/src/services/integrity.service.js).
-2.  **Hash:** The controller computes a SHA-256 hash of the incoming JSON body
-    ([serverRequestHash](node-server/src/features/bank/bank.controller.js)).
-3.  **Binding (Tampering Protection):** The controller compares the
-    `serverRequestHash` against the `requestHash` returned inside the decrypted
-    token
-    ([tokenPayload.requestDetails.requestHash](node-server/src/features/bank/bank.controller.js)).
-    *   Rejection: If they do not match, it means the payload was altered in
-        transit (Payload Hijacking / MitM). The controller instantly throws a
-        `403 Forbidden` with `error_code: "REQUEST_TAMPERED"`.
-
-### 2\. The Policy (bank.policy.js)
-
-Once the token is proven mathematically valid and bound to the correct payload,
-the Controller delegates business-logic enforcement to the Policy layer by
-calling
-[bankPolicy.evaluateTransferPolicy(tokenPayload)](node-server/src/features/bank/bank.controller.js).
-
-The [BankPolicy](node-server/src/features/bank/bank.policy.js) class isolates
-the specific rules required for the financial transaction. It inspects the JSON
-verdicts and returns a boolean. For a transfer to succeed, the token must
-satisfy all of the following:
-
-*   **deviceRecognitionVerdict:** Must meet at least `MEETS_DEVICE_INTEGRITY`
-*   **appRecognitionVerdict:** Must equal `PLAY_RECOGNIZED`.
-*   **appLicensingVerdict:** Must equal `LICENSED`.
-*   **requestPackageName:** Must match the expected package name on the server.
-
-### 3\. Structured error formatting
-
-If `evaluateTransferPolicy` returns false, the Controller translates the failure
-into an actionable HTTP response for the Android client.
-
-Rather than returning a generic 500 Internal Server Error, the API is designed
-to return a 403 Forbidden containing the exact parameters the Android client
-needs to trigger an in-app Remediation Dialog:
-
-```json
-{
-  "status": "ERROR",
-  "error_code": "INTEGRITY_REJECTED",
-  "message": "Device does not meet the required security standards.",
-  "remediation_code": 4
-}
-```
-
-This payload ensures the client knows *why* the request failed and *how* to
-utilize Play Integrity API to fix it.
+## Server-Side Implementation
+See the following files in `node-server/src/features/bank`:
+*   **Cryptographic validation & Error formatting:** [bank.controller.js](node-server/src/features/bank/bank.controller.js)
+*   **Business logic enforcement:** [bank.policy.js](node-server/src/features/bank/bank.policy.js)
 
 --------------------------------------------------------------------------------
 
-# Streaming Micro-App: Client
+# Streaming Micro-App
 
-[This directory](android-client/feature/streaming) contains the Android client
-implementation for the Streaming micro-app. It focuses on configuring Android’s
-[ExoPlayer](https://developer.android.com/media/media3/exoplayer) to utilize
-Play Integrity tokens when setting up a
-[DASH playback](https://developer.android.com/media/media3/exoplayer/dash).
+The Streaming micro-app demonstrates how to parse standard integrity tokens,
+enforce tiered access policies, and dynamically modify DASH XML manifests.
 
-#### 1\. Token Preparation
+<div align="center">
+  <img src="media/streaming_app.gif" height="400" alt="Streaming App Flow">
+</div>
 
-Media playback requires near-instantaneous network requests to prevent
-buffering. To achieve this, the client pre-warms the token provider via the
-`IntegrityRepository.warmUp()` method during application’s `onCreate()` method
-so that subsequent integrity token requests before video playback only incurs a
-latency of a few hundred milliseconds.
+### User Journey Overview
+The user accesses video content, which requests an integrity token to determine their device's trust tier. Based on the returned token, the backend dynamically modifies the video manifest to serve either premium or restricted streams. A user on a verified device enjoys high-quality streaming, while an unrecognized environment receives degraded quality without outright blocking playback.
 
-In addition, if the integrity token generation fails, the client catches the
-exception and intentionally proceeds with a null token rather than hard-failing.
-This allows the backend to gracefully fall back to the lowest Restricted tier
-(144p) instead of blocking the user.
+## Client-Side Implementation
+See the following files in `android-client/feature/streaming`:
+*   **ExoPlayer Network Injection & Dynamic Tiers:** [StreamingViewModel.kt](android-client/feature/streaming/src/main/java/com/android/security/samples/playintegrityapi/feature/streaming/ui/StreamingViewModel.kt)
+*   **Request Hash Generation (Content Binding):** [GetSecureStreamingConfigUseCase.kt](android-client/feature/streaming/src/main/java/com/android/security/samples/playintegrityapi/feature/streaming/domain/GetSecureStreamingConfigUseCase.kt)
 
-#### 2\. Request Hash Generation (Content Binding)
-
-Unlike the Bank micro-app where the payload is a complex transaction, the
-streaming payload is simply the requested video context. The client manually
-constructs a tight JSON string:
-
-```json
-{
-  "action": "fetch_manifest",
-  "contentId": "sample_video_01"
-}
-```
-
-It then generates a SHA-256 hash of this string to produce the `requestHash`
-which is passed to the Play Integrity API when requesting a token.
-
-In a production environment, you should strengthen this binding further. Instead
-of just hashing the action and content ID, consider including a non sensitive
-user-specific identifier within the hashed data. This could be:
-
-*   A server-side session token
-*   The user's unique ID
-*   A nonce tied to the user's current session.
-
-By including a session-specific element, the JSON to be hashed might look like:
-
-```json
-{
-  "action": "fetch_manifest",
-  "contentId": "sample_video_01",
-  "sessionId": "user_session_abc123"
-}
-```
-
-Hashing this entire string ensures the integrity token is bound not only to the
-content but also to that specific user session, making it more difficult for an
-attacker to replay a token across different users or sessions. The backend must
-then be able to reconstruct and verify this same hash based on the authenticated
-user's session and the requested content.
-
-#### 3\. ExoPlayer Network Injection
-
-The client does not manually download the XML manifest. Instead, it natively
-instructs [ExoPlayer](https://developer.android.com/media/media3/exoplayer) to
-append the integrity token to its outbound HTTP headers.
-
-The preparePlayerMediaSource() method instantiates a
-[DefaultHttpDataSource.Factory()](https://developer.android.com/reference/androidx/media3/datasource/DefaultHttpDataSource.Factory).
-We use
-[setDefaultRequestProperties()](https://developer.android.com/reference/androidx/media3/datasource/DefaultHttpDataSource.Factory#setDefaultRequestProperties\(java.util.Map%3Cjava.lang.String,java.lang.String%3E\))
-to inject the `X-Play-Integrity-Token header`. This factory is passed into the
-[DashMediaSource](https://developer.android.com/reference/androidx/media3/exoplayer/dash/DashMediaSource),
-ensuring the token is present when ExoPlayer requests the .mpd file over the
-network.
-
-#### 4\. Handling Dynamic Tiers & UI State
-
-The Android client is completely agnostic to the quality tier it receives.
-ExoPlayer automatically parses the dynamically filtered DASH manifest returned
-by the Node.js server.
-
-The `StreamingViewModel` attaches a
-[Player.Listener](https://developer.android.com/reference/androidx/media3/common/Player.Listener)
-to the player. When the manifest loads, `onTracksChanged()` scans the available
-video tracks to find the maximum videoHeight the server authorized. It then maps
-this height (e.g., \>= 1080, \>= 720\) to the
-`StreamingUiState.activeTierIndex`, which instantly updates the Compose UI to
-highlight the correct "Premium", "Standard", or "Restricted" card on the screen.
-
-# Streaming Micro-App: Server
-
-[This directory](node-server/src/features/streaming) contains the backend logic
-for the Streaming micro-app. It demonstrates how to parse standard integrity
-tokens, enforce tiered access policies, and dynamically modify DASH XML
-manifests.
-
-The backend is structured around three primary components: the Controller, the
-Policy, and the Manifest Service.
-
-1.  The Controller
-    ([streaming.controller.js](node-server/src/features/streaming/streaming.controller.js)):
-    The controller handles cryptographic validation and routing.
-    *   **Token Decoding & Replay Protection:** The token is extracted and
-        decoded via the `integrity.middleware`. Because we use Standard
-        requests, Google's server
-        [automatically detects](https://developer.android.com/google/play/integrity/standard#replay-protection)
-        and rejects replayed tokens.
-    *   **Content Binding Check:** The `#isContentBindingValid` method creates a
-        mirror payload (`{ action: 'fetch_manifest', contentId: 'contentId'})`,
-        computes its hash, and compares it against the `requestHash` inside the
-        decoded token. If they mismatch, the controller falls back to the
-        Restricted tier.
-2.  The Policy
-    ([streaming.policy.js](node-server/src/features/streaming/streaming.policy.js)):
-    This file evaluates the trust level of the device to determine the maximum
-    allowed video resolution. The `evaluateStreamQuality` function translates
-    Play Integrity labels into business rules:
-    *   1080p (Premium): Requires `MEETS_STRONG_INTEGRITY` and an Android SDK
-        version \>= 33\.
-    *   720p (High): Requires `MEETS_DEVICE_INTEGRITY` (SDK \>= 33\) or
-        `MEETS_STRONG_INTEGRITY` (SDK \< 33).
-    *   480p (Standard): Requires `MEETS_DEVICE_INTEGRITY` (SDK \< 33).
-    *   240p (Basic): Requires `MEETS_BASIC_INTEGRITY`.
-    *   144p (Restricted): The default fallback.
-3.  The Manifest Service
-    ([manifest.service.js](node-server/src/features/streaming/manifest.service.js)):
-    Once the policy determines the maximum allowed resolution, the controller
-    delegates to the `ManifestService`. The service parses the root XML manifest
-    using the xml2js library. The `#filterVideoRepresentations` method locates
-    the `AdaptationSet` for video and strips out any `<Representation>` nodes
-    that exceed the permitted height limit dictated by the policy.
-
-—--------------------------------------------------------------------------------------------------------------------------------------------------------
-
-# Game Micro-App: Client
-
-[This directory](android-client/feature/game) contains the Android client
-implementation for the Game micro-app. It focuses on orchestrating a real-time
-game session, handling continuous background Play Integrity token generation on
-dynamic intervals, and utilizing several Play remediation dialogs.
-
-#### 1\. Token preparation and session initialisation
-
-When the user navigates to the Rhythm Pulse micro-app, the client automatically
-pre-warms the token provider using `IntegrityRepository.warmUp()`. \
-When the user taps Start Secure Session, the `InitiateGameUseCase` fetches an
-initial Play Integrity token and calls `POST /api/v1/game/initiate`. The server
-returns a unique `sessionId`, the game’s `targetTime`, and an array of
-randomised check-in intervals (e.g. `[2.5, 5.12, 8.3]`).
-
-#### 2\. TOCTOU defence
-
-Once gameplay begins, the client must periodically prove its environment remains
-secure.
-
-*   An asynchronous coroutine monitors the intervals returned by the server.
-*   When an interval is reached, the client applies a randomised padding offset
-    (jitter) and requests a standard integrity token in the background via the
-    `GenerateIntervalTokenUseCase`.
-*   Content Binding the Interval: To cryptographically bind the background token
-    to this exact time window, the client hashes a dynamic challenge string.
-*   The resulting SHA-256 hash is passed as the requestHash parameter, and the
-    token is stored in memory alongside its interval time.
-
-#### 3\. Session stop and final submission
-
-When the user taps **Stop**, the `SubmitGameScoreUseCase` prepares a final
-payload containing the local `actualTime` elapsed and the array of collected
-background `intervalTokens`. A final closing Play Integrity token is generated,
-bound to the hash of this entire final JSON payload, and submitted to `POST
-/api/v1/game/stop`.
-
-#### 4\. Handling environment remediation
-
-![Game sample showcasing the effect of an unknown app capturing
-the screen during an active game session and Play remediation](media/game_app_remediation.gif)
-
-***Figure 2\.** Game sample showcasing the effect of an unknown app capturing
-the screen during an active game session and Play remediation*
-
-If the server rejects a session due to an environmental policy failure, the
-`GameViewModel.triggerRemediationDialog()`leverages Play’s user remediation
-features to prompt the user to either close apps that maybe recording their
-screen or controlling their device via the `CLOSE_ALL_ACCESS_RISK` dialog, or
-uninstall malicious apps on their device by using the `GET_STRONG_INTEGRITY`
-dialog.
-
-# Game Micro-App: Server
-
-[This directory](node-server/src/features/game) contains the backend
-implementation for the Game sample. It showcases a stateful, secure verification
-pattern designed to defeat TOCTOU (Time-of-Check to Time-of-Use) cheats, enforce
-strict environment policies, and securely evaluate background Play Integrity API
-attestations.
-
-### Architecture overview
-
-The feature is divided into the Controller
-([game.controller.js](node-server/src/features/game/game.controller.js)) and the
-Policy ([game.policy.js](node-server/src/features/game/game.policy.js)). The
-entire architecture relies on Play Integrity API tokens to validate state at
-multiple points in time in a session.
-
-1.  The `GameController` manages active sessions, orchestrates integrity token
-    verification to decide if a user’s final score would be added to a
-    hypothetical leaderboard.
-2.  The `GamePolicy` class acts as the core rules engine, evaluating the
-    decrypted Play Integrity JSON payload, focusing heavily on interpreting the
-    `environmentDetails` returned by the Integrity API:
-    *   Play Protect: Evaluates `playProtectVerdict` to ensure it equals
-        `NO_ISSUES`. If threats are found, this signals a compromised
-        environment harbouring potentially malicious software.
-    *   App access risk evaluation: It parses the `appsDetected` array from the
-        `appAccessRiskVerdict`:
-        *   If the array includes `UNKNOWN_CAPTURING`, `screenCaptureSafe` is
-            flagged as false.
-        *   If the array includes `UNKNOWN_OVERLAYS` or `UNKNOWN_CONTROLLING`,
-            `accessibilitySafe` is flagged as false, preventing automated
-            clickers or malicious overlays.
-    *   Strict fallback: If `environmentDetails` or the `appAccessRiskVerdict`
-        are missing entirely from the integrity token payload, the policy
-        securely defaults `screenCaptureSafe` and `accessibilitySafe` to false.
-        This ensures the system does not blindly approve unevaluated
-        environments.
-
-### API Endpoints
-
-#### `POST /api/v1/game/initiate`
-
-Initialises a secure gameplay session, triggering an initial evaluation and
-returning the randomised check-in intervals.
-
-**Request headers:** \
-`x-play-integrity-token`: `<token>`
-
-**Success response (`200 OK`):**
-
-```json
-{
-  "status": "SUCCESS",
-  "sessionId": "b6a0ff4d-0453-481b-8512-1df69614db5a",
-  "targetTime": 15.34,
-  "intervals": [2.45, 6.12, 10.89],
-  "checklist": {
-    "isSecure": true,
-    "screenCaptureSafe": true,
-    "accessibilitySafe": true,
-    "playProtectSafe": true
-  }
-}
-```
-
-#### `POST /api/v1/game/status`
-
-Queries the real-time security state of the device environment. Typically
-triggered on demand or when the mobile app is resumed from a background state.
-
-**Request headers:** \
-`x-play-integrity-token`: `<real_time_environment_integrity_token>`
-
-**Success response (`200 OK`):**
-
-```json
-{
-  "status": "SUCCESS",
-  "checklist": {
-    "isSecure": true,
-    "screenCaptureSafe": true,
-    "accessibilitySafe": true,
-    "playProtectSafe": true
-  }
-}
-```
-
-#### `POST /api/v1/game/stop`
-
-Submits the final score payload along with all background Play Integrity tokens
-for strict verification.
-
-**Request headers:** \
-`x-play-integrity-token`: `<final_closing_integrity_token>`
-
-**Request payload:**
-
-```json
-{
-  "sessionId": "b6a0ff4d-0453-481b-8512-1df69614db5a",
-  "clientStartTime": 1727247472000,
-  "actualTime": 16.54,
-  "intervalTokens": [
-    { "interval": 2.45, "token": "<your_token>" },
-    { "interval": 6.12, "token": "<your_token>" },
-    { "interval": 10.89, "token": "<your_token>" }
-  ]
-}
-```
-
-**Success response (`200 OK`):**
-
-```json
-{
-  "status": "SUCCESS",
-  "message": "Score verified."
-}
-```
-
-**Tampered/Compromised response (`403 Forbidden`):**
-
-```json
-{
-  "status": "ERROR",
-  "error_code": "ENVIRONMENT_COMPROMISED",
-  "message": "Cheat toggling detected: Environment compromised at interval 6.12s."
-}
-```
+## Server-Side Implementation
+See the following files in `node-server/src/features/streaming`:
+*   **Token Decoding, Replay Protection & Content Binding:** [streaming.controller.js](node-server/src/features/streaming/streaming.controller.js)
+*   **Tiered Access Policies:** [streaming.policy.js](node-server/src/features/streaming/streaming.policy.js)
+*   **Dynamic DASH XML Filtering:** [manifest.service.js](node-server/src/features/streaming/manifest.service.js)
 
 --------------------------------------------------------------------------------
+
+# Game Micro-App
+
+The Game sample showcases a stateful, secure verification pattern designed to defeat TOCTOU
+(Time-of-Check to Time-of-Use) cheats, enforce strict environment policies, and securely evaluate
+background Play Integrity API attestations.
+
+<div align="center">
+  <img src="media/game_app_remediation.gif" height="400" alt="Game App Flow">
+</div>
+
+### User Journey Overview
+Upon initiating a game session, a secure state is established on the server. While playing, the app performs background checks and sends periodic updates. If an anomaly is detected (like an attached debugger or a compromised environment), the game pauses and prompts the user for remediation. Once the environment is secure again, gameplay resumes, culminating in a securely validated final score submission.
+
+## Client-Side Implementation
+See the following files in `android-client/feature/game`:
+*   **Session Initialization:** [InitiateGameUseCase.kt](android-client/feature/game/src/main/java/com/android/security/samples/playintegrityapi/feature/game/domain/InitiateGameUseCase.kt)
+*   **TOCTOU Defence (Background Intervals) & Remediation:** [GameViewModel.kt](android-client/feature/game/src/main/java/com/android/security/samples/playintegrityapi/feature/game/ui/GameViewModel.kt)
+*   **Session Stop & Final Submission:** [SubmitGameScoreUseCase.kt](android-client/feature/game/src/main/java/com/android/security/samples/playintegrityapi/feature/game/domain/SubmitGameScoreUseCase.kt)
+
+## Server-Side Implementation
+See the following files in `node-server/src/features/game`:
+*   **Stateful Verification & TOCTOU Prevention:** [game.controller.js](node-server/src/features/game/game.controller.js)
+*   **Environment Policy Rules:** [game.policy.js](node-server/src/features/game/game.policy.js)
+
+--------------------------------------------------------------------------------------------
 
 # Testing Play Console Integrity Responses
 

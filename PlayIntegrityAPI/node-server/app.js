@@ -28,6 +28,7 @@ app.post('/api/v1/bank/transfer', extractIntegrityToken, bankController.handleTr
 app.get('/api/v1/streaming/:contentId/manifest.mpd', extractIntegrityToken, streamingController.getManifest);
 
 // Game Micro-app Routes
+app.post('/api/v1/game/challenge', gameController.getChallenge);
 app.post('/api/v1/game/initiate', extractIntegrityToken, gameController.initiate);
 app.post('/api/v1/game/status', extractIntegrityToken, gameController.getStatus);
 app.post('/api/v1/game/stop', extractIntegrityToken, gameController.stop);

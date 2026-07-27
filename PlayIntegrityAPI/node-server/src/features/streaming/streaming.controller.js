@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const { StatusCodes } = require('http-status-codes');
 const cryptoService = require('../../services/crypto.service');
 const streamingPolicy = require('./streaming.policy');
 const manifestService = require('./manifest.service');
@@ -25,6 +26,10 @@ class StreamingController {
 
     async getManifest(req, res, next) {
         try {
+            // Token Decoding & Replay Protection:
+            // The token is extracted and decoded via the `integrity.middleware`.
+            // Because we use Standard requests, Google's server automatically detects
+            // and rejects replayed tokens.
             const integrityPayload = res.locals.integrityPayload;
             const contentId = req.params.contentId;
 
@@ -35,7 +40,7 @@ class StreamingController {
             const customManifestXml = await manifestService.getFilteredManifest(maxQuality);
 
             res.set('Content-Type', 'application/dash+xml');
-            res.status(200).send(customManifestXml);
+            res.status(StatusCodes.OK).send(customManifestXml);
 
         } catch (error) {
             next(error);

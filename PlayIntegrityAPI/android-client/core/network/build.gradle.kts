@@ -53,6 +53,15 @@ android {
 
     flavorDimensions += "environment"
     productFlavors {
+        // SECURITY WARNING: DEVELOPMENT ONLY
+        // The BASE_URL definitions below use unencrypted HTTP (cleartext) to connect to the local Node.js server.
+        // This is strictly for local development to avoid the friction of configuring local SSL/TLS certificates.
+        // Cleartext permissions for these specific local addresses are explicitly granted in the app's
+        // network_security_config.xml.
+        //
+        // This sample itself is not meant to be deployed as-is. When building your own production application,
+        // you should avoid cleartext permissions and ensure to use secure HTTPS (https://).
+
         create("emulator") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/\"")
