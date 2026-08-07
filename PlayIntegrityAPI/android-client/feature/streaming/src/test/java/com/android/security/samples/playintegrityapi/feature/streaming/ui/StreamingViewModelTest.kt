@@ -83,7 +83,7 @@ class StreamingViewModelTest {
     }
 
     @Test
-    fun `init calls warmUp on IntegrityRepository with correct GCP Project Number`() = runTest {
+    fun `init calls warmUp on IntegrityRepository`() = runTest {
         whenever(getSecureStreamingConfigUseCase(any())).thenReturn(
             StreamingResult.Failure("Error")
         )

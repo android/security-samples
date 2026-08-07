@@ -228,6 +228,9 @@ class GameViewModel @Inject constructor(
         sessionId = response.sessionId
         intervals = response.intervals
         updateChecklistUi(response.checklist)
+        // NOTE: The game transitions to Ready and allows the player to start even if the initial
+        // checklist contains violations. The server tracks these violations internally and enforces
+        // score rejection only at the end of the session, preventing instant feedback to potential cheaters.
         _uiState.update { it.copy(gameState = GameState.Ready(response.targetTime)) }
     }
 
@@ -242,7 +245,10 @@ class GameViewModel @Inject constructor(
     }
 
     /**
-     * TOCTOU Defence: Schedule background token generation for every random interval
+     * TOCTOU Defence: Schedule background token generation for every random interval.
+     * While the game is running, the client silently requests a new Play Integrity token
+     * at each required interval. The requestHash for these intermediate tokens binds the
+     * sessionId and the current interval time.
      */
     private fun scheduleAllIntervalTokens() {
         intervals.forEach { interval ->

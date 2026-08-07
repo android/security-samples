@@ -52,7 +52,7 @@ class BankViewModelTest {
         submitSecureTransferUseCase = mock()
         integrityRepository = mock()
 
-        viewModel = BankViewModel(submitSecureTransferUseCase, integrityRepository, TEST_CLOUD_PROJECT_NUMBER)
+        viewModel = BankViewModel(submitSecureTransferUseCase, integrityRepository)
     }
 
     @After

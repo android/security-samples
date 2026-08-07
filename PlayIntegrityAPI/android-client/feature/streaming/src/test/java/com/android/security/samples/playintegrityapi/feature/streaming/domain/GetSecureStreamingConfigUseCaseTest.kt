@@ -43,13 +43,12 @@ class GetSecureStreamingConfigUseCaseTest {
     private lateinit var logMock: MockedStatic<Log>
     private lateinit var base64Mock: MockedStatic<Base64>
 
-    private val testGcpProjectNumber = 1234567890L
-    private val expectedManifestUrl = "http://10.0.2.2:3000/api/v1/streaming/sample_video_01/manifest.mpd"
+    private val expectedManifestUrl = "${com.android.security.samples.playintegrityapi.core.network.BuildConfig.BASE_URL}api/v1/streaming/sample_video_01/manifest.mpd"
 
     @Before
     fun setup() {
         integrityRepository = mock()
-        getSecureStreamingConfigUseCase = GetSecureStreamingConfigUseCase(integrityRepository, testGcpProjectNumber)
+        getSecureStreamingConfigUseCase = GetSecureStreamingConfigUseCase(integrityRepository)
 
         logMock = mockStatic(Log::class.java)
         logMock.`when`<Int> { Log.d(anyOrNull(), anyOrNull()) }.thenReturn(0)

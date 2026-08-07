@@ -26,6 +26,8 @@ import com.google.android.play.core.integrity.StandardIntegrityManager.StandardI
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityToken
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenProvider
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenRequest
+import com.google.android.play.core.integrity.model.IntegrityErrorCode
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
@@ -91,7 +93,9 @@ class IntegrityRepositoryImpl @Inject constructor(
                 .setCloudProjectNumber(cloudProjectNumber)
                 .build()
 
-            tokenProvider = standardIntegrityManager.prepareIntegrityToken(request).await()
+            retryWithExponentialBackoff {
+                tokenProvider = standardIntegrityManager.prepareIntegrityToken(request).await()
+            }
         }
     }
 
@@ -109,7 +113,9 @@ class IntegrityRepositoryImpl @Inject constructor(
                 .setRequestHash(requestHash)
                 .build()
 
-            provider.request(request).await()
+            retryWithExponentialBackoff {
+                provider.request(request).await()
+            }
         }
     }
 
@@ -131,5 +137,41 @@ class IntegrityRepositoryImpl @Inject constructor(
             .build()
 
         standardIntegrityManager.showDialog(dialogRequest).await()
+    }
+
+    /**
+     * Executes a given block of code with exponential backoff if a [StandardIntegrityException]
+     * with [IntegrityErrorCode.CLIENT_TRANSIENT_ERROR] is thrown.
+     *
+     * @param maxAttempts The maximum number of attempts to make. If set to 3, the block will be
+     *                    executed up to 3 times (1 initial attempt + 2 retries).
+     * @param initialDelay The delay in milliseconds before the first retry attempt.
+     * @param maxDelay The maximum delay in milliseconds allowed between retries. This caps the
+     *                 delay from growing too large.
+     * @param factor The multiplier applied to the current delay for each subsequent retry.
+     *               For example, with a factor of 2.0, a 1000ms delay becomes 2000ms, then 4000ms.
+     * @param block The suspendable action to execute and potentially retry.
+     * @return The result of the [block] if successful.
+     */
+    private suspend inline fun <T> retryWithExponentialBackoff(
+        maxAttempts: Int = 3,
+        initialDelay: Long = 1000L,
+        maxDelay: Long = 10000L,
+        factor: Double = 2.0,
+        crossinline block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        repeat(maxAttempts - 1) {
+            try {
+                return block()
+            } catch (e: StandardIntegrityException) {
+                if (e.errorCode != IntegrityErrorCode.CLIENT_TRANSIENT_ERROR) {
+                    throw e
+                }
+                delay(currentDelay)
+                currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+            }
+        }
+        return block()
     }
 }

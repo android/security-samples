@@ -29,6 +29,11 @@ class SubmitGameScoreUseCase @Inject constructor(
 ) {
     private val requestAdapter = moshi.adapter(GameStopRequest::class.java)
 
+    // Stopping the game:
+    // When the user stops the timer, the client compiles the final actualTime, the
+    // sessionId, the clientStartTime, and the array of all intervalTokens into a JSON
+    // payload. It hashes this entire JSON string, requests a final Play Integrity token,
+    // and sends the lot to POST /api/v1/game/stop.
     suspend operator fun invoke(request: GameStopRequest): GameResult<GameStopResponse> {
         val jsonPayload = requestAdapter.toJson(request)
         val requestHash = generateSha256Hash(jsonPayload)

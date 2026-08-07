@@ -193,6 +193,12 @@ class StreamingViewModel @Inject constructor(
         }
     }
 
+    // ExoPlayer Network Injection:
+    // The client does not manually download the XML manifest. Instead, it natively
+    // instructs ExoPlayer to append the integrity token to its outbound HTTP headers
+    // using DefaultHttpDataSource.Factory().setDefaultRequestProperties().
+    // This factory is passed into the DashMediaSource, ensuring the token is present
+    // when ExoPlayer requests the .mpd file over the network.
     @OptIn(UnstableApi::class)
     private fun preparePlayerMediaSource(
         manifestUrl: String,
@@ -277,6 +283,11 @@ class StreamingViewModel @Inject constructor(
         }
     }
 
+    // Handling Dynamic Tiers & UI State:
+    // The Android client is completely agnostic to the quality tier it receives.
+    // ExoPlayer automatically parses the dynamically filtered DASH manifest returned
+    // by the Node.js server. When the manifest loads, onTracksChanged scans the available
+    // video tracks to find the maximum videoHeight the server authorized.
     private fun handleTracksChanged(tracks: Tracks) {
         var maxHeight = 0
         for (group in tracks.groups) {
