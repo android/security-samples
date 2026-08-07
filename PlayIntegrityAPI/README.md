@@ -3,13 +3,13 @@
 > [!NOTE] 
 > Disclaimer: Non-Goals
 >
-> This project is designed for demonstration and educational purposes to provide
-> a blueprint for technical integration. It is not the goal of this sample app
-> to provide a production-ready anti-abuse strategy.
+> This sample app is designed for demonstration and educational purposes, as a
+> blueprint for technical integration. It does not provide a production-ready
+> anti-abuse strategy. While the sample app demonstrates best practices for
+> token handling and server-side verification, it is not a substitute for a
+> comprehensive security audit.
 >
-> While the sample demonstrates best practices for token handling and
-> server-side verification, it is not a substitute for a comprehensive security
-> audit. Developers should treat the Play Integrity API as one signal within a
+> Developers should treat the Play Integrity API as one signal within a
 > broader, multi-layered anti-abuse strategy tailored to their specific business
 > risks.
 
@@ -23,23 +23,23 @@
 > need to generate and configure self-signed SSL/TLS certificates locally.
 >
 > **This configuration is strictly for local deployment.** When integrating these
-> concepts into your own production app, you **should** secure your network layer by using
-> secure HTTPS (`https://`) and avoid having cleartext permissions in your
+> concepts into your own production app, you **should** secure your network layer by
+> using secure HTTPS (`https://`) and avoid having cleartext permissions in your
 > `network_security_config.xml`.
 
 # Setup
 
-To run the Play Integrity API Canonical Sample end-to-end, you need to configure
-a Google Cloud project, register your app in the Google Play Console, and set up
-both the local Node.js server and the Android client.
+To run the Sample App end-to-end, you must configure a Google Cloud project,
+register your app in the Google Play Console, and set up both the local Node.js
+server and the Android client.
 
 ### Prerequisites
 
-*   [Node.js](https://nodejs.org/en) v18 or higher installed.
+*   [Node.js](https://nodejs.org/en) v18 or higher installed
 *   The latest version of [Android Studio](https://developer.android.com/studio)
-    installed.
-*   A Google Play Developer account.
-*   A Google Cloud account.
+    installed
+*   A Google Play Developer account
+*   A Google Cloud account
 
 ## Step 1: Configure Google Cloud & Play Console
 
@@ -55,11 +55,11 @@ Google Play app entry.
     *   *Note: Choose your package name carefully. You will use this exact
         package name to configure both the Android client and the Node.js server
         later.*
-4.  In the Play Console left navigation menu, select **Protected with Play**,
-    and then click **Get Started** on the **Play Integrity API** card.
-5.  Follow the on-screen instructions to link the Google Cloud project you
-    created in step 1\.
-6.  Enable the population of the following
+4.  In the Play Console left navigation menu, select **Protected with Play**.
+5.  Click **Get Started** on the **Play Integrity API** card.
+6.  Follow the on-screen instructions to link the Google Cloud project you
+    created in step 1.
+7.  Enable the population of the following
     [optional verdicts](https://developer.android.com/google/play/integrity/verdicts#optional-device-labels)
     within the same section:
     *   `MEETS_STRONG_INTEGRITY`
@@ -76,8 +76,8 @@ Your local server needs credentials to securely communicate with Google Cloud.
     Accounts**.
 2.  Click **Create Service Account**. (Default settings are fine; no special
     roles are required).
-3.  Click on your newly created Service Account, navigate to the **Keys** tab,
-    and select **Add Key** \> **Create new key**.
+3.  Select your newly created service account, select the **Keys** tab,
+    and click **Add Key** \> **Create new key**.
 4.  Select **JSON** as the key type and click **Create** to download the
     credentials file to your machine.
 
@@ -90,7 +90,7 @@ git clone https://github.com/android/security-samples.git
 cd security-samples
 ```
 
-## Step 4: Local Server Setup
+## Step 4: Set up Local Server
 
 Configure and run the Node.js backend.
 
@@ -108,7 +108,7 @@ Configure and run the Node.js backend.
     *   `GOOGLE_CREDENTIALS_PATH="./google-credentials.json"`
 6.  Start the server: `node app.js`
 
-## Step 5: Android Client Setup
+## Step 5: Set up Android Client
 
 Configure the Android app to communicate with your local server and your
 specific Google Cloud project.
@@ -139,7 +139,7 @@ specific Google Cloud project.
     *   Note: once the device is disconnected, you will need to run this command
         again the next time you need to test this flow
 
-# Banking Micro App
+# Banking Micro-App
 
 The Banking micro-app demonstrates how to securely parse HTTP requests,
 cryptographically validate Play Integrity tokens, and enforce business rules.
@@ -190,9 +190,9 @@ See the following files in `node-server/src/features/streaming`:
 
 # Game Micro-App
 
-The Game sample showcases a stateful, secure verification pattern designed to defeat TOCTOU
-(Time-of-Check to Time-of-Use) cheats, enforce strict environment policies, and securely evaluate
-background Play Integrity API attestations.
+The Game micro-app showcases a stateful, secure verification pattern designed to
+defeat TOCTOU (Time-of-Check to Time-of-Use) cheats, enforce strict environment
+policies, and securely evaluate background Play Integrity API attestations.
 
 <div align="center">
   <img src="media/game_app_remediation.gif" height="400" alt="Game App Flow">
@@ -214,12 +214,12 @@ See the following files in `node-server/src/features/game`:
 
 --------------------------------------------------------------------------------------------
 
-# Testing Play Console Integrity Responses
+# Test Play Console Integrity Responses
 
 This section guides you through using the Play Integrity API test responses
 feature in the
 [Google Play Console](https://developer.android.com/distribute/console) to
-dynamically alter the streaming quality in the sample app. This assumes you have
+dynamically alter the streaming quality in the Streaming micro-app. This assumes you have
 already completed the full end-to-end setup as described in the root project
 guide (i.e. app created in Play Console, Play Integrity API enabled, Google
 Cloud project linked, Node.js server running, Android app buildable).
@@ -242,13 +242,13 @@ Cloud project linked, Node.js server running, Android app buildable).
     *   In the Play Console left navigation menu, select **Protected with
         Play**.
     *   On the **Protected with Play** page, locate the **Play Integrity API**
-        row and click the **Manage** button.
+        row and click **Manage**.
 
 ![Navigating to Play Integrity API settings on Play Console](media/integrity_api_settings_navigation.png)
 
 2.  **Configure Test Responses:**
     *   Scroll down to the Testing section.
-    *   Click on Create new test.
+    *   Click **Create new test**.
     *   Give your test a descriptive name (e.g., "Device Unrecognized Test").
     *   Under Email lists, select or create an email list containing the Google
         account(s) used on your test device(s).
@@ -265,21 +265,22 @@ Cloud project linked, Node.js server running, Android app buildable).
             *   `appLicensingVerdict: LICENSED`
         *   Restricted Quality (No Device Integrity):
             *   `appRecognitionVerdict: UNEVALUATED`
-            *   `deviceRecognitionVerdict: []` (Empty)
-            *`appLicensingVerdict: UNEVALUATED`
+            *   `deviceRecognitionVerdict: [] (Empty)`
+            *   `appLicensingVerdict: UNEVALUATED`
 
 ![UI to configure a test response](media/integrity_api_test_response_configuration.png)
 
-3.  **Save the test configurations:**
-    *   Click Create test. You might need to click Save changes at the bottom of
-        the page too. Propagation time varies depending on multiple factors, but
-        changes should be reflected in about 1-2 hours at the longest.
+3.  **Save the Test Configurations:**
+    *   Click **Create test**. You might need to click **Save changes** at the
+        bottom of the page too. Propagation time varies depending on multiple
+        factors, but changes should be reflected in about 1-2 hours at the
+        longest.
 4.  **Observe in the Android App:**
-    *   Open the Streaming micro-app on your test device (ensuring it's logged
-        in to one of the accounts from the email list in the test
-        configuration).
+    *   Open the sample app on your test device and navigate to the
+        **Streaming** micro-app (ensuring the device is signed in with one of the
+        accounts from the email list in the test configuration).
     *   The app might show a quality level based on a previous integrity check.
-    *   Click the "Refresh Integrity Check" button within the app. This action
+    *   Click the **Refresh Integrity Check** button within the app. This action
         forces the app to request a new Play Integrity token and DASH manifest.
     *   Play Integrity API will return a token with the verdicts you configured
         in the Play Console test.
@@ -289,7 +290,7 @@ Cloud project linked, Node.js server running, Android app buildable).
         "Restricted") should update, and the video playback quality will adjust
         after ExoPlayer reloads the manifest.
 
-#### Example Scenarios to Try:
+#### Example Scenarios to try:
 
 *   **Simulate a Rooted/Compromised Device:** Set `deviceRecognitionVerdict` to
     be empty. The stream should degrade to the "Restricted" tier.
@@ -304,3 +305,8 @@ Integrity Check" button, you can effectively test how the end-to-end integration
 handles various Play Integrity API outcomes and confirm that the stream quality
 adjusts dynamically as expected.
 
+--------------------------------------------------------------------------------
+
+# Support
+
+If you encounter issues or have feedback specific to this sample app, please [file an issue](https://github.com/android/security-samples/issues) in this repository.
