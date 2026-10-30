@@ -26,7 +26,7 @@ import com.google.android.play.core.integrity.StandardIntegrityManager.StandardI
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityToken
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenProvider
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenRequest
-import com.google.android.play.core.integrity.model.IntegrityErrorCode
+import com.google.android.play.core.integrity.model.StandardIntegrityErrorCode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -141,7 +141,7 @@ class IntegrityRepositoryImpl @Inject constructor(
 
     /**
      * Executes a given block of code with exponential backoff if a [StandardIntegrityException]
-     * with [IntegrityErrorCode.CLIENT_TRANSIENT_ERROR] is thrown.
+     * with [StandardIntegrityErrorCode.CLIENT_TRANSIENT_ERROR] is thrown.
      *
      * @param maxAttempts The maximum number of attempts to make. If set to 3, the block will be
      *                    executed up to 3 times (1 initial attempt + 2 retries).
@@ -165,7 +165,7 @@ class IntegrityRepositoryImpl @Inject constructor(
             try {
                 return block()
             } catch (e: StandardIntegrityException) {
-                if (e.errorCode != IntegrityErrorCode.CLIENT_TRANSIENT_ERROR) {
+                if (e.errorCode != StandardIntegrityErrorCode.CLIENT_TRANSIENT_ERROR) {
                     throw e
                 }
                 delay(currentDelay)
